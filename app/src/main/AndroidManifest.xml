@@ -17,6 +17,9 @@
         android:theme="@style/Theme.SplashScreen"
         tools:targetApi="31">
         <activity
+            android:name=".ui.home.HomeActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.startup.MainActivity"
             android:exported="true">
             <intent-filter>

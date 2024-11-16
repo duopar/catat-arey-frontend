@@ -57,7 +57,7 @@ object AreyCrypto {
         if (envelope.aad.isEmpty()) throw IllegalArgumentException("empty AAD, this shouldn't happen.")
         if (envelope.data.isEmpty()) throw IllegalArgumentException("empty data, this shouldn't happen.")
 
-        cipher.updateAAD(getDefaultAAD().encodeToByteArray())
+        cipher.updateAAD(envelope.aad)
 
         val ret = GCMEnvelope()
 
@@ -74,7 +74,7 @@ object AreyCrypto {
         if (envelope.aad.isEmpty()) throw IllegalArgumentException("empty AAD, this shouldn't happen.")
         if (envelope.data.isEmpty()) throw IllegalArgumentException("empty data, this shouldn't happen.")
 
-        cipher.updateAAD(getDefaultAAD().encodeToByteArray())
+        cipher.updateAAD(envelope.aad)
 
         return cipher.doFinal(envelope.data)
     }
