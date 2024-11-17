@@ -6,8 +6,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/gradient_bg"
-    android:paddingHorizontal="64dp"
-    android:paddingVertical="156dp"
+    android:paddingHorizontal="48dp"
+    android:paddingVertical="98dp"
     tools:context=".ui.startup.MainActivity">
 
     <androidx.constraintlayout.widget.ConstraintLayout
