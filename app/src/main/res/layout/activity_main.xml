@@ -5,35 +5,136 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white"
+    android:background="@drawable/gradient_bg"
+    android:paddingHorizontal="64dp"
+    android:paddingVertical="156dp"
     tools:context=".ui.startup.MainActivity">
 
-    <TextView
-        android:id="@+id/tv_test"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Test"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:textAlignment="center"
+        android:background="@drawable/rounded_corner_8"
+        android:backgroundTint="#4DD9D9D9"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent">
 
-    <Button
-        android:id="@+id/btn_biometric_login"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Test Biometric"
-        app:layout_constraintEnd_toEndOf="@id/tv_test"
-        app:layout_constraintStart_toStartOf="@id/tv_test"
-        app:layout_constraintTop_toBottomOf="@id/tv_test" />
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="32dp">
 
-    <Button
-        android:id="@+id/btn_test_login"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="This Button will Log you in"
-        app:layout_constraintEnd_toEndOf="@id/tv_test"
-        app:layout_constraintStart_toStartOf="@id/tv_test"
-        app:layout_constraintTop_toBottomOf="@id/btn_biometric_login" />
+            <TextView
+                android:id="@+id/tv_test"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Test"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+
+
+
+
+            <TextView
+                android:id="@+id/tv_login"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/login"
+                android:textColor="@color/white"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/tv_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="32dp"
+                android:text="@string/username"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tv_login" />
+
+            <EditText
+                android:id="@+id/ed_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/rounded_corner_stroke_white_4"
+                android:inputType="text"
+                android:padding="8dp"
+                android:textSize="12sp"
+                app:layout_constraintStart_toStartOf="@+id/tv_name"
+                app:layout_constraintTop_toBottomOf="@+id/tv_name" />
+
+            <TextView
+                android:id="@+id/tv_pw"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/password"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="@+id/ed_name"
+                app:layout_constraintTop_toBottomOf="@+id/ed_name" />
+
+            <EditText
+                android:id="@+id/ed_pw"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/rounded_corner_stroke_white_4"
+                android:inputType="textPassword"
+                android:padding="8dp"
+                android:textSize="12sp"
+                app:layout_constraintTop_toBottomOf="@+id/tv_pw"
+                tools:layout_editor_absoluteX="32dp" />
+
+            <Button
+                android:id="@+id/btn_login"
+                android:layout_width="128dp"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/login"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/btn_test_login" />
+
+            <Button
+                android:id="@+id/btn_biometric_login"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Test Biometric"
+                app:layout_constraintEnd_toEndOf="@id/tv_test"
+                app:layout_constraintStart_toStartOf="@id/tv_test"
+                app:layout_constraintTop_toBottomOf="@id/tv_test" />
+
+            <Button
+                android:id="@+id/btn_test_login"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="This Button will Log you in"
+                app:layout_constraintEnd_toEndOf="@id/tv_test"
+                app:layout_constraintStart_toStartOf="@id/tv_test"
+                app:layout_constraintTop_toBottomOf="@id/btn_biometric_login" />
+
+
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

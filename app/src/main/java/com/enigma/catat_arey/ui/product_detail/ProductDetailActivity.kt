@@ -1,33 +1,34 @@
-package com.enigma.catat_arey.ui.home
+package com.enigma.catat_arey.ui.product_detail
 
-import android.content.Intent
 import android.os.Bundle
 import android.widget.EditText
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.enigma.catat_arey.R
-import com.enigma.catat_arey.databinding.ActivityHomeBinding
-import com.enigma.catat_arey.ui.setting.SettingActivity
+import com.enigma.catat_arey.databinding.ActivityProductDetailBinding
 import com.enigma.catat_arey.util.showCustomDialog
 
-class HomeActivity : AppCompatActivity() {
-    private lateinit var binding:ActivityHomeBinding
-
+class ProductDetailActivity : AppCompatActivity() {
+    private lateinit var binding: ActivityProductDetailBinding
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
         setTheme(R.style.Theme_CatatArey)
         actionBar?.hide()
-        binding = ActivityHomeBinding.inflate(layoutInflater)
+
+        binding = ActivityProductDetailBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
-
         setupListener()
     }
 
@@ -36,32 +37,26 @@ class HomeActivity : AppCompatActivity() {
             onBackPressedDispatcher.onBackPressed()
         }
 
-        binding.clAddProduct.setOnClickListener {
+        binding.clEditProduct.setOnClickListener {
             showCustomDialog(
                 context = this,
-                title = "Tambah Produk",
-                layoutId = R.layout.dialog_add_product_layout,
+                title = "Catat Perubahan",
+                layoutId = R.layout.dialog_edit_product_layout,
                 onPositiveAction = { dialogView, dialog ->
-                    val edProductName = dialogView.findViewById<EditText>(R.id.ed_product_name)
-                    val edProductPrice = dialogView.findViewById<EditText>(R.id.ed_product_price)
-                    val edProductStock = dialogView.findViewById<EditText>(R.id.ed_product_stock)
+                    val edProductOut = dialogView.findViewById<EditText>(R.id.ed_product_out)
+                    val edProductIn = dialogView.findViewById<EditText>(R.id.ed_product_in)
 
                     // TODO: Add product edit logic here
-
+                    if (edProductOut.text.toString().isNotEmpty() && edProductIn.text.toString().isNotEmpty()) {
+                        // update product
+                        dialog.setCancelable(true)
+                        dialog.create().dismiss()
+                    } else {
+                        edProductOut.error = "Wajib Diisi"
+                        edProductIn.error = "Wajib Diisi"
+                    }
                 }
             )
-        }
-
-        binding.topAppBar.setOnMenuItemClickListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.menu_setting -> {
-                    val intent = Intent(this, SettingActivity::class.java)
-                    startActivity(intent)
-                    true
-                }
-
-                else -> false
-            }
         }
     }
 }
