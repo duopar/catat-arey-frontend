@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingHorizontal="48dp"
+    android:paddingVertical="24dp">
+
+    <TextView
+        android:id="@+id/tv_current_pw"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/password_saat_ini"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+    <EditText
+        android:id="@+id/ed_current_pw"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="text"
+        android:background="@drawable/rounded_corner_stroke_white_4"
+        android:padding="8dp"
+        android:textSize="12sp" />
+
+
+    <TextView
+        android:id="@+id/tv_new_pw"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/password_baru"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+    <EditText
+        android:id="@+id/ed_new_pw"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="text"
+        android:background="@drawable/rounded_corner_stroke_white_4"
+        android:padding="8dp"
+        android:textSize="12sp" />
+
+    <TextView
+        android:id="@+id/tv_confirm_pw"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/konfirmasi_password"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+    <EditText
+        android:id="@+id/ed_confirm_pw"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="text"
+        android:background="@drawable/rounded_corner_stroke_white_4"
+        android:padding="8dp"
+        android:textSize="12sp" />
+</LinearLayout>
