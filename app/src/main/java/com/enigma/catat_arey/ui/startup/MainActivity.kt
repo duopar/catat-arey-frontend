@@ -1,5 +1,6 @@
 package com.enigma.catat_arey.ui.startup
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -15,6 +16,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.enigma.catat_arey.R
 import com.enigma.catat_arey.databinding.ActivityMainBinding
+import com.enigma.catat_arey.ui.home.HomeActivity
 import com.enigma.catat_arey.util.AreyCrypto
 import com.enigma.catat_arey.util.AreyCrypto.getBiometricDecryptionCipher
 import com.enigma.catat_arey.util.AreyCrypto.getBiometricEncryptionCipher
@@ -56,11 +58,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         enableEdgeToEdge()
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
+
 
         promptInfo = PromptInfo.Builder()
             .setTitle("Login Biometrik")
@@ -254,6 +252,13 @@ class MainActivity : AppCompatActivity() {
                     "Yahaha gapunya biometric, login biasa ajah (IN-PROGRESS)"
                 )
             }
+        }
+
+        binding.btnLogin.setOnClickListener{
+            val intent =
+                Intent(this@MainActivity, HomeActivity::class.java)
+            startActivity(intent)
+            finish()
         }
     }
 

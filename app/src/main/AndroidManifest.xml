@@ -20,6 +20,12 @@
             android:name=".ui.home.HomeActivity"
             android:exported="false" />
         <activity
+            android:name=".ui.setting.SettingActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.product_detail.ProductDetailActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.startup.MainActivity"
             android:exported="true">
             <intent-filter>
