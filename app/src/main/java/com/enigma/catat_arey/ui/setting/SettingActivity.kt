@@ -3,7 +3,6 @@ package com.enigma.catat_arey.ui.setting
 import android.os.Bundle
 import android.widget.EditText
 import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat

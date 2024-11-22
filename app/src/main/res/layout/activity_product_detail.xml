@@ -5,8 +5,8 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingHorizontal="8dp"
     android:background="@color/white"
+    android:paddingHorizontal="8dp"
     tools:context=".ui.product_detail.ProductDetailActivity">
 
     <com.google.android.material.appbar.AppBarLayout
@@ -199,7 +199,6 @@
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/cl_product_total" />
-
 
 
         <androidx.recyclerview.widget.RecyclerView

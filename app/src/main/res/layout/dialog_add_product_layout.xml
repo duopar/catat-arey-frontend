@@ -18,8 +18,8 @@
         android:id="@+id/ed_product_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:inputType="text"
         android:background="@drawable/rounded_corner_stroke_white_4"
+        android:inputType="text"
         android:padding="8dp"
         android:textSize="12sp" />
 
@@ -37,8 +37,8 @@
         android:id="@+id/ed_product_price"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:inputType="text"
         android:background="@drawable/rounded_corner_stroke_white_4"
+        android:inputType="text"
         android:padding="8dp"
         android:textSize="12sp" />
 
@@ -56,8 +56,8 @@
         android:id="@+id/ed_product_stock"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:inputType="text"
         android:background="@drawable/rounded_corner_stroke_white_4"
+        android:inputType="text"
         android:padding="8dp"
         android:textSize="12sp" />
 

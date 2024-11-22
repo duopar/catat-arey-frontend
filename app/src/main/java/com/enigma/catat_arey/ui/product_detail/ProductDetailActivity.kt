@@ -3,7 +3,6 @@ package com.enigma.catat_arey.ui.product_detail
 import android.os.Bundle
 import android.widget.EditText
 import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -47,7 +46,9 @@ class ProductDetailActivity : AppCompatActivity() {
                     val edProductIn = dialogView.findViewById<EditText>(R.id.ed_product_in)
 
                     // TODO: Add product edit logic here
-                    if (edProductOut.text.toString().isNotEmpty() && edProductIn.text.toString().isNotEmpty()) {
+                    if (edProductOut.text.toString().isNotEmpty() && edProductIn.text.toString()
+                            .isNotEmpty()
+                    ) {
                         // update product
                         dialog.setCancelable(true)
                         dialog.create().dismiss()

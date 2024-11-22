@@ -3,6 +3,7 @@ package com.enigma.catat_arey.ui.startup
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.liveData
+import com.enigma.catat_arey.data.network.NetworkRepository
 import com.enigma.catat_arey.data.preferences.DatastoreManager
 import com.enigma.catat_arey.util.AreyCrypto
 import com.enigma.catat_arey.util.GCMEnvelope
@@ -15,7 +16,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val datastoreManager: DatastoreManager
+    private val datastoreManager: DatastoreManager,
+    private val networkRepository: NetworkRepository
 ) : ViewModel() {
 
     /*
@@ -32,8 +34,24 @@ class MainViewModel @Inject constructor(
         out: MutableLiveData<T> (so the state is reusable)
         Call on email-pass login
      */
-    fun getTokenFromLogin(): String {
-        return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+    suspend fun getTokenFromLogin(username: String, password: String): String {
+        val token = networkRepository.login(username, password)
+        if (token != null) {
+            networkRepository.updateToken(token)
+            return token
+        }
+
+        return "getTokenFromLogin Failed"
+    }
+
+    suspend fun testAuthApi(): String {
+        val username = networkRepository.getUserInfo("u1n0lbIRxsr7sWl1J3cv")
+
+        if (username != null) {
+            return username.username
+        }
+
+        return "testAuthApi Failed"
     }
 
     /*

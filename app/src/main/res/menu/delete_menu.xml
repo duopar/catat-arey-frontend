@@ -6,8 +6,7 @@
             android:id="@+id/delete_setting"
             android:icon="@drawable/ic_delete_outline_24"
             android:title="Delete"
-            app:showAsAction="always"
-            />
+            app:showAsAction="always" />
 
     </group>
 </menu>

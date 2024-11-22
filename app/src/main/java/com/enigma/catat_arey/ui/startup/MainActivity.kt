@@ -1,6 +1,5 @@
 package com.enigma.catat_arey.ui.startup
 
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -12,17 +11,16 @@ import androidx.biometric.BiometricPrompt
 import androidx.biometric.BiometricPrompt.PromptInfo
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.lifecycleScope
 import com.enigma.catat_arey.R
 import com.enigma.catat_arey.databinding.ActivityMainBinding
-import com.enigma.catat_arey.ui.home.HomeActivity
 import com.enigma.catat_arey.util.AreyCrypto
 import com.enigma.catat_arey.util.AreyCrypto.getBiometricDecryptionCipher
 import com.enigma.catat_arey.util.AreyCrypto.getBiometricEncryptionCipher
 import com.enigma.catat_arey.util.GCMEnvelope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import javax.crypto.Cipher
 
@@ -59,7 +57,6 @@ class MainActivity : AppCompatActivity() {
 
         enableEdgeToEdge()
 
-
         promptInfo = PromptInfo.Builder()
             .setTitle("Login Biometrik")
             .setSubtitle("Silahkan gunakan biometrik untuk akses aplikasi")
@@ -77,7 +74,7 @@ class MainActivity : AppCompatActivity() {
                         // Save the token from backend
                         Cipher.ENCRYPT_MODE -> {
                             val env = GCMEnvelope(
-                                data = viewModel.getTokenFromLogin().encodeToByteArray(),
+                                data = "ASDDDD".encodeToByteArray(),
                                 aad = AreyCrypto.getDefaultAAD().encodeToByteArray()
                             )
 
@@ -254,11 +251,21 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        binding.btnLogin.setOnClickListener{
-            val intent =
-                Intent(this@MainActivity, HomeActivity::class.java)
-            startActivity(intent)
-            finish()
+        binding.btnLogin.setOnClickListener {
+            val username = binding.edName.text.toString()
+            val password = binding.edPw.text.toString()
+
+            lifecycleScope.launch {
+                val tkn = viewModel.getTokenFromLogin(username, password)
+                val test = viewModel.testAuthApi()
+
+                Toast.makeText(this@MainActivity, tkn, Toast.LENGTH_LONG).show()
+                Toast.makeText(this@MainActivity, test, Toast.LENGTH_LONG).show()
+            }
+//            val intent =
+//                Intent(this@MainActivity, HomeActivity::class.java)
+//            startActivity(intent)
+//            finish()
         }
     }
 

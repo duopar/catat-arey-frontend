@@ -5,8 +5,8 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingHorizontal="8dp"
     android:background="@color/white"
+    android:paddingHorizontal="8dp"
     tools:context=".ui.home.HomeActivity">
 
     <com.google.android.material.appbar.AppBarLayout
