@@ -26,17 +26,6 @@
             android:padding="32dp">
 
             <TextView
-                android:id="@+id/tv_test"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Test"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-
-            <TextView
                 android:id="@+id/tv_login"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -105,25 +94,7 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/btn_test_login" />
-
-            <Button
-                android:id="@+id/btn_biometric_login"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Test Biometric"
-                app:layout_constraintEnd_toEndOf="@id/tv_test"
-                app:layout_constraintStart_toStartOf="@id/tv_test"
-                app:layout_constraintTop_toBottomOf="@id/tv_test" />
-
-            <Button
-                android:id="@+id/btn_test_login"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="This Button will Log you in"
-                app:layout_constraintEnd_toEndOf="@id/tv_test"
-                app:layout_constraintStart_toStartOf="@id/tv_test"
-                app:layout_constraintTop_toBottomOf="@id/btn_biometric_login" />
+                app:layout_constraintTop_toBottomOf="@+id/ed_pw" />
 
 
         </androidx.constraintlayout.widget.ConstraintLayout>
