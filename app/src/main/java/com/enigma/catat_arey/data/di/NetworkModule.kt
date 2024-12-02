@@ -1,6 +1,5 @@
 package com.enigma.catat_arey.data.di
 
-import android.util.Log
 import com.enigma.catat_arey.data.network.AreyApiConfig
 import com.enigma.catat_arey.data.network.AreyApiService
 import com.enigma.catat_arey.data.network.AreyTokenProvider
@@ -87,7 +86,6 @@ class NetworkModule {
         @BaseUrl baseUrl: String,
         @DefaultApi defaultClient: OkHttpClient
     ): Retrofit {
-        Log.d("DEFAULT_RETROFIT", baseUrl)
         return Retrofit.Builder()
             .baseUrl(baseUrl)
             .client(defaultClient)
