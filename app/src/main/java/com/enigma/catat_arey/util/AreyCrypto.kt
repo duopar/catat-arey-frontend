@@ -9,17 +9,19 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
 object AreyCrypto {
-    const val AES_KEY_SIZE_BITS = 256
-    const val GCM_TAG_SIZE_BITS = 128
+    private const val AES_KEY_SIZE_BITS = 256
+    private const val GCM_TAG_SIZE_BITS = 128
     const val GCM_IV_SIZE = 12
 
     fun getDefaultAAD(): String = "meteorite_fall"
 
-    fun getBiometricKeyAlias(): String = "biohazard"
+    private fun getBiometricKeyAlias(): String = "biohazard"
 
-    fun getAesGCMCipher(): Cipher = Cipher.getInstance("AES/GCM/NoPadding")
+    private fun getDefaultKeyAlias(): String = "safehazard"
 
-    fun getDefaultAESBiometricKeyGenSpec(keyAlias: String): KeyGenParameterSpec =
+    private fun getAesGCMCipher(): Cipher = Cipher.getInstance("AES/GCM/NoPadding")
+
+    private fun getDefaultAESBiometricKeyGenSpec(keyAlias: String): KeyGenParameterSpec =
         KeyGenParameterSpec.Builder(
             keyAlias,
             KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
@@ -31,6 +33,35 @@ object AreyCrypto {
             .setUserAuthenticationRequired(true)
             .setInvalidatedByBiometricEnrollment(false)
             .build()
+
+    private fun getDefaultAESKeyGenSpec(keyAlias: String): KeyGenParameterSpec =
+        KeyGenParameterSpec.Builder(
+            keyAlias,
+            KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
+        )
+            .setKeySize(AES_KEY_SIZE_BITS)
+            .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+            .setRandomizedEncryptionRequired(true)
+            .build()
+
+    fun getDefaultEncryptionCipher(): Cipher {
+        val cipher = getAesGCMCipher()
+        val secretKey = getDefaultKeystoreSecretKey(getDefaultKeyAlias())
+        cipher.init(Cipher.ENCRYPT_MODE, secretKey)
+
+        return cipher
+    }
+
+    fun getDefaultDecryptionCipher(iv: ByteArray): Cipher {
+        if (iv.size != GCM_IV_SIZE) throw IllegalArgumentException("improper IV size, this shouldn't happen.")
+
+        val cipher = getAesGCMCipher()
+        val secretKey = getDefaultKeystoreSecretKey(getDefaultKeyAlias())
+        cipher.init(Cipher.DECRYPT_MODE, secretKey, GCMParameterSpec(GCM_TAG_SIZE_BITS, iv))
+
+        return cipher
+    }
 
     fun getBiometricDecryptionCipher(iv: ByteArray): Cipher {
         if (iv.size != GCM_IV_SIZE) throw IllegalArgumentException("improper IV size, this shouldn't happen.")
@@ -77,6 +108,18 @@ object AreyCrypto {
         cipher.updateAAD(envelope.aad)
 
         return cipher.doFinal(envelope.data)
+    }
+
+    private fun getDefaultKeystoreSecretKey(keyAlias: String): SecretKey {
+        val ks = KeyStore.getInstance("AndroidKeyStore")
+        ks.load(null)
+        ks.getKey(keyAlias, null)?.let { return it as SecretKey }
+
+        val keyGenerator =
+            KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore")
+        keyGenerator.init(getDefaultAESKeyGenSpec(keyAlias))
+
+        return keyGenerator.generateKey()
     }
 
     private fun getBiometricKeystoreSecretKey(keyAlias: String): SecretKey {
