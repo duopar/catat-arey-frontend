@@ -50,7 +50,7 @@ class SettingActivity : AppCompatActivity() {
                     if (edNewPw.text.toString() == edConfPw.text.toString()) {
                         // update pw
                         dialog.setCancelable(true)
-                        dialog.create().dismiss()
+                        dialog.dismiss()
                     } else {
                         edConfPw.error = "Password tidak sama"
                     }

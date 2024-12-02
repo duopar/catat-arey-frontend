@@ -51,7 +51,7 @@ class ProductDetailActivity : AppCompatActivity() {
                     ) {
                         // update product
                         dialog.setCancelable(true)
-                        dialog.create().dismiss()
+                        dialog.dismiss()
                     } else {
                         edProductOut.error = "Wajib Diisi"
                         edProductIn.error = "Wajib Diisi"

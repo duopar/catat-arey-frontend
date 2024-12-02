@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.liveData
 import com.enigma.catat_arey.data.network.NetworkRepository
+import com.enigma.catat_arey.data.network.ResponseResult
 import com.enigma.catat_arey.data.preferences.DatastoreManager
 import com.enigma.catat_arey.util.AreyCrypto
 import com.enigma.catat_arey.util.GCMEnvelope
@@ -29,52 +30,52 @@ class MainViewModel @Inject constructor(
     }
 
     /*
-        TODO: Get token from backend
-        in: email, password
-        out: MutableLiveData<T> (so the state is reusable)
         Call on email-pass login
      */
-    suspend fun getTokenFromLogin(username: String, password: String): String {
-        val token = networkRepository.login(username, password)
-        if (token != null) {
-            networkRepository.updateToken(token)
-            return token
+    fun getTokenFromLogin(username: String, password: String): LiveData<MainUiState<String>> =
+        liveData {
+            emit(MainUiState.Loading)
+
+            when (val resp = networkRepository.login(username, password)) {
+                is ResponseResult.Error -> {
+                    emit(MainUiState.Error(resp.message))
+                }
+
+                is ResponseResult.Success -> {
+                    val data = resp.data
+                    datastoreManager.updateUserId(data.userId)
+                    networkRepository.updateToken(data.token)
+                    emit(MainUiState.Success(data.token))
+                }
+            }
         }
-
-        return "getTokenFromLogin Failed"
-    }
-
-    suspend fun testAuthApi(): String {
-        val username = networkRepository.getUserInfo("u1n0lbIRxsr7sWl1J3cv")
-
-        if (username != null) {
-            return username.username
-        }
-
-        return "testAuthApi Failed"
-    }
 
     /*
         Decrypt saved user token for later use.
         Call on successful biometric login
      */
-    fun getTokenFromDatastore(cipher: Cipher, token: GCMEnvelope): LiveData<LoginState> = liveData {
-        try {
-            val decToken = AreyCrypto.aesGcmDecrypt(cipher, token)
-            emit(LoginState.Finished(decToken.decodeToString()))
-        } catch (e: Exception) {
-            e.cause?.message?.let { LoginState.Error(it) }?.let { emit(it) }
+    fun getTokenFromDatastore(cipher: Cipher, token: GCMEnvelope): LiveData<MainUiState<String>> =
+        liveData {
+            emit(MainUiState.Loading)
+            try {
+                val decToken = AreyCrypto.aesGcmDecrypt(cipher, token).decodeToString()
+                networkRepository.updateToken(decToken)
+                emit(MainUiState.Success(decToken))
+            } catch (e: Exception) {
+                e.cause?.message?.let { MainUiState.Error(it) }?.let { emit(it) }
+            }
         }
-    }
 
     /*
         Check if user has logged in before, thus if user can login with biometric.
         Call on Activity start
+
+        TODO: Check token validity, refresh if expired
      */
-    fun canBiometricLogin(): Flow<BiometricEligibilityState> = flow {
-        emit(BiometricEligibilityState.Loading)
+    fun canBiometricLogin(): Flow<MainUiState<Boolean>> = flow {
+        emit(MainUiState.Loading)
         emit(
-            BiometricEligibilityState.Finished(
+            MainUiState.Success(
                 datastoreManager.currentUserToken.first().isNotEmpty()
             )
         )
@@ -84,31 +85,21 @@ class MainViewModel @Inject constructor(
         Update user token in datastore for future login.
         Call on successful email-pass login
      */
-    fun updateUserToken(cipher: Cipher, token: GCMEnvelope): LiveData<UpdateTokenState> = liveData {
-        emit(UpdateTokenState.Loading)
-        try {
-            val encToken = AreyCrypto.aesGcmEncrypt(cipher, token)
-            datastoreManager.updateUserToken(encToken.iv + encToken.data)
-            emit(UpdateTokenState.Finished)
-        } catch (e: Exception) {
-            e.cause?.message?.let { UpdateTokenState.Error(it) }?.let { emit(it) }
+    fun updateUserToken(cipher: Cipher, token: GCMEnvelope): LiveData<MainUiState<Nothing>> =
+        liveData {
+            emit(MainUiState.Loading)
+            try {
+                val encToken = AreyCrypto.aesGcmEncrypt(cipher, token)
+                datastoreManager.updateUserToken(encToken.iv + encToken.data)
+                emit(MainUiState.Success(null))
+            } catch (e: Exception) {
+                e.cause?.message?.let { MainUiState.Error(it) }?.let { emit(it) }
+            }
         }
-    }
 }
 
-sealed interface BiometricEligibilityState {
-    data object Loading : BiometricEligibilityState
-    data class Finished(val canBiometricLogin: Boolean) : BiometricEligibilityState
-}
-
-sealed interface UpdateTokenState {
-    data object Loading : UpdateTokenState
-    data class Error(val message: String) : UpdateTokenState
-    data object Finished : UpdateTokenState
-}
-
-sealed interface LoginState {
-    data object Loading : LoginState
-    data class Error(val message: String) : LoginState
-    data class Finished(val message: String) : LoginState
+sealed interface MainUiState<out T> {
+    data object Loading : MainUiState<Nothing>
+    data class Error(val message: String) : MainUiState<Nothing>
+    data class Success<T>(val data: T?) : MainUiState<T>
 }

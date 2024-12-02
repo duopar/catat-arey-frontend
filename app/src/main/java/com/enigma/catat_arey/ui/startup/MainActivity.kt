@@ -1,5 +1,6 @@
 package com.enigma.catat_arey.ui.startup
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -11,16 +12,16 @@ import androidx.biometric.BiometricPrompt
 import androidx.biometric.BiometricPrompt.PromptInfo
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.lifecycle.lifecycleScope
 import com.enigma.catat_arey.R
 import com.enigma.catat_arey.databinding.ActivityMainBinding
+import com.enigma.catat_arey.ui.home.HomeActivity
 import com.enigma.catat_arey.util.AreyCrypto
 import com.enigma.catat_arey.util.AreyCrypto.getBiometricDecryptionCipher
 import com.enigma.catat_arey.util.AreyCrypto.getBiometricEncryptionCipher
+import com.enigma.catat_arey.util.AreyCrypto.getDefaultDecryptionCipher
+import com.enigma.catat_arey.util.AreyCrypto.getDefaultEncryptionCipher
 import com.enigma.catat_arey.util.GCMEnvelope
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import javax.crypto.Cipher
 
@@ -36,13 +37,15 @@ class MainActivity : AppCompatActivity() {
     private lateinit var promptInfo: PromptInfo
 
     // Biometric cryptography operation requirements
-    private lateinit var userToken: GCMEnvelope
-    private lateinit var biometricCipher: Cipher
-    private var biometricCipherMode = -1
+    private lateinit var plainUserToken: String
+    private lateinit var encryptedUserToken: GCMEnvelope
+    private lateinit var tokenCipher: Cipher
+    private lateinit var newTokenEnvelope: GCMEnvelope
+    private var tokenCipherMode = -1
 
     // Checking
     private var deviceSupportBiometric = false
-    private var canBiometricLogin = true
+    private var canAutoLogin = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
@@ -69,38 +72,27 @@ class MainActivity : AppCompatActivity() {
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                     super.onAuthenticationSucceeded(result)
 
-                    when (biometricCipherMode) {
+                    when (tokenCipherMode) {
 
                         // Save the token from backend
                         Cipher.ENCRYPT_MODE -> {
-                            val env = GCMEnvelope(
-                                data = "ASDDDD".encodeToByteArray(),
-                                aad = AreyCrypto.getDefaultAAD().encodeToByteArray()
-                            )
 
-                            viewModel.updateUserToken(result.cryptoObject!!.cipher!!, env)
+                            viewModel.updateUserToken(
+                                result.cryptoObject!!.cipher!!,
+                                newTokenEnvelope
+                            )
                                 .observe(this@MainActivity) {
                                     when (it) {
-                                        is UpdateTokenState.Error -> {
-                                            Toast.makeText(
-                                                applicationContext,
-                                                "ERROR - ${it.message}", Toast.LENGTH_LONG
-                                            ).show()
+                                        is MainUiState.Error -> {
+                                            showToast("[Debug] ERROR - ${it.message}")
                                         }
 
-                                        UpdateTokenState.Finished -> {
-                                            binding.btnBiometricLogin.isEnabled = true
-                                            binding.btnTestLogin.isEnabled = true
-                                            Toast.makeText(
-                                                applicationContext,
-                                                "FINISHED", Toast.LENGTH_LONG
-                                            ).show()
-                                            recreate()
+                                        is MainUiState.Success -> {
+                                            showToast("[Debug] Token Saved (biometric)")
+                                            moveToHome()
                                         }
 
-                                        UpdateTokenState.Loading -> {
-                                            binding.btnBiometricLogin.isEnabled = false
-                                            binding.btnTestLogin.isEnabled = false
+                                        MainUiState.Loading -> {
                                         }
                                     }
                                 }
@@ -110,37 +102,27 @@ class MainActivity : AppCompatActivity() {
                         Cipher.DECRYPT_MODE -> {
                             viewModel.getTokenFromDatastore(
                                 result.cryptoObject!!.cipher!!,
-                                userToken
+                                encryptedUserToken
                             )
                                 .observe(this@MainActivity) {
                                     when (it) {
-                                        is LoginState.Error -> {
-                                            Toast.makeText(
-                                                applicationContext,
-                                                "ERROR - ${it.message}", Toast.LENGTH_LONG
-                                            ).show()
+                                        is MainUiState.Error -> {
+                                            showToast("[Debug] ERROR - ${it.message}")
                                         }
 
-                                        is LoginState.Finished -> {
-                                            binding.btnBiometricLogin.isEnabled = true
-                                            binding.btnTestLogin.isEnabled = true
-                                            Toast.makeText(
-                                                applicationContext,
-                                                it.message, Toast.LENGTH_LONG
-                                            ).show()
+                                        is MainUiState.Success -> {
+                                            showToast("[Debug] Ok")
+                                            moveToHome()
                                         }
 
-                                        LoginState.Loading -> {
-                                            binding.btnBiometricLogin.isEnabled = false
-                                            binding.btnTestLogin.isEnabled = false
-                                        }
+                                        MainUiState.Loading -> {}
                                     }
                                 }
                         }
 
                         -1 -> Toast.makeText(
                             applicationContext,
-                            "Authentication successful - Crypto Failure, shouldn't happen.",
+                            "[Debug] Authentication successful - Crypto Failure, shouldn't happen.",
                             Toast.LENGTH_LONG
                         )
                             .show()
@@ -186,12 +168,64 @@ class MainActivity : AppCompatActivity() {
             runBlocking {
                 viewModel.canBiometricLogin().collect { state ->
                     when (state) {
-                        is BiometricEligibilityState.Finished -> {
-                            canBiometricLogin = state.canBiometricLogin
+                        is MainUiState.Success -> {
+                            canAutoLogin = state.data!!
+                            if (canAutoLogin) { // User has logged in before, feasible biometric
+                                runBlocking {
+                                    val _userToken = viewModel.getUserToken()
+                                    encryptedUserToken = GCMEnvelope(
+                                        iv = _userToken.copyOfRange(0, AreyCrypto.GCM_IV_SIZE),
+                                        data = _userToken.copyOfRange(
+                                            AreyCrypto.GCM_IV_SIZE,
+                                            _userToken.size
+                                        ),
+                                        aad = AreyCrypto.getDefaultAAD().encodeToByteArray()
+                                    )
+                                }
+
+                                tokenCipherMode = Cipher.DECRYPT_MODE
+
+                                if (deviceSupportBiometric) { // Device can do biometric
+                                    tokenCipher =
+                                        getBiometricDecryptionCipher(encryptedUserToken.iv)
+
+                                    biometricPrompt.authenticate(
+                                        promptInfo,
+                                        BiometricPrompt.CryptoObject(tokenCipher)
+                                    )
+                                } else {
+                                    tokenCipher =
+                                        getDefaultDecryptionCipher(encryptedUserToken.iv)
+
+                                    viewModel.getTokenFromDatastore(
+                                        tokenCipher,
+                                        encryptedUserToken
+                                    )
+                                        .observe(this@MainActivity) {
+                                            when (it) {
+                                                is MainUiState.Error -> {
+                                                    showToast("[Debug] ERROR - ${it.message}")
+                                                }
+
+                                                is MainUiState.Success -> {
+                                                    showToast("[Debug] Ok (non-biometric)")
+                                                    moveToHome()
+                                                }
+
+                                                MainUiState.Loading -> {}
+                                            }
+                                        }
+                                }
+
+                            }
                             it.remove()
                         }
 
-                        BiometricEligibilityState.Loading -> { /* Keep splashscreen on screen */
+                        MainUiState.Loading -> { /* Keep splashscreen on screen */
+                        }
+
+                        is MainUiState.Error -> {
+
                         }
                     }
                 }
@@ -202,81 +236,78 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupListener() {
-        binding.btnBiometricLogin.setOnClickListener {
-            if (deviceSupportBiometric) { // Device can do biometric
-                if (canBiometricLogin) { // User has logged in before, feasible biometric
-                    runBlocking {
-                        val _userToken = viewModel.getUserToken()
-                        userToken = GCMEnvelope(
-                            iv = _userToken.copyOfRange(0, AreyCrypto.GCM_IV_SIZE),
-                            data = _userToken.copyOfRange(AreyCrypto.GCM_IV_SIZE, _userToken.size),
-                            aad = AreyCrypto.getDefaultAAD().encodeToByteArray()
-                        )
-                    }
-
-                    biometricCipherMode = Cipher.DECRYPT_MODE
-                    biometricCipher = getBiometricDecryptionCipher(userToken.iv)
-                    biometricPrompt.authenticate(
-                        promptInfo,
-                        BiometricPrompt.CryptoObject(biometricCipher)
-                    )
-                } else { // User hasn't log in before, need written credential login
-                    biometricCipherMode = Cipher.ENCRYPT_MODE
-                    showAlertDialog(
-                        "Biometric",
-                        "Silahkan login untuk pertama kali agar dapat menggunakan fitur biometrik kedepannya."
-                    )
-                }
-            } else { // Device can't do biometric
-                showAlertDialog(
-                    "Biometric",
-                    "Perangkat yang digunakan tidak support biometric atau belum ada biometric yang terdaftar."
-                )
-            }
-        }
-
-        binding.btnTestLogin.setOnClickListener {
-            if (deviceSupportBiometric) { // Device can do biometric
-                biometricCipherMode = Cipher.ENCRYPT_MODE
-                biometricCipher = getBiometricEncryptionCipher()
-                biometricPrompt.authenticate(
-                    promptInfo,
-                    BiometricPrompt.CryptoObject(biometricCipher)
-                )
-            } else { // Device can't do biometric
-                showAlertDialog(
-                    "Biometric",
-                    "Yahaha gapunya biometric, login biasa ajah (IN-PROGRESS)"
-                )
-            }
-        }
-
         binding.btnLogin.setOnClickListener {
+            binding.btnLogin.isEnabled = false
+
             val username = binding.edName.text.toString()
             val password = binding.edPw.text.toString()
 
-            lifecycleScope.launch {
-                val tkn = viewModel.getTokenFromLogin(username, password)
-                val test = viewModel.testAuthApi()
+            if (username.isEmpty() || username.isEmpty()) {
+                binding.btnLogin.isEnabled = true
+                showToast("Fields can't be empty.")
+            } else {
+                viewModel.getTokenFromLogin(username, password).observe(this) {
+                    when (it) {
+                        is MainUiState.Error -> {
+                            showToast(it.message)
+                            binding.btnLogin.isEnabled = true
+                        }
 
-                Toast.makeText(this@MainActivity, tkn, Toast.LENGTH_LONG).show()
-                Toast.makeText(this@MainActivity, test, Toast.LENGTH_LONG).show()
+                        is MainUiState.Success -> {
+                            val token = it.data
+                            plainUserToken = token!!
+                            tokenCipherMode = Cipher.ENCRYPT_MODE
+
+                            newTokenEnvelope = GCMEnvelope(
+                                data = plainUserToken.encodeToByteArray(),
+                                aad = AreyCrypto.getDefaultAAD().encodeToByteArray()
+                            )
+
+                            if (deviceSupportBiometric) { // Device can do biometric
+                                tokenCipher = getBiometricEncryptionCipher()
+                                biometricPrompt.authenticate(
+                                    promptInfo,
+                                    BiometricPrompt.CryptoObject(tokenCipher)
+                                )
+                            } else {
+                                tokenCipher = getDefaultEncryptionCipher()
+                                viewModel.updateUserToken(tokenCipher, newTokenEnvelope)
+                                    .observe(this@MainActivity) {
+                                        when (it) {
+                                            is MainUiState.Error -> {
+                                                showToast("[Debug] ERROR - ${it.message}")
+                                            }
+
+                                            is MainUiState.Success -> {
+                                                showToast("[Debug] Token Saved (non-biometric)")
+                                                moveToHome()
+                                            }
+
+                                            MainUiState.Loading -> {
+                                            }
+                                        }
+                                    }
+                            }
+
+                            binding.btnLogin.isEnabled = true
+                        }
+
+                        MainUiState.Loading -> showToast("Loading...")
+                    }
+                }
             }
-//            val intent =
-//                Intent(this@MainActivity, HomeActivity::class.java)
-//            startActivity(intent)
-//            finish()
         }
     }
 
-    private fun showAlertDialog(title: String, message: String) {
-        MaterialAlertDialogBuilder(this, R.style.CustomAlertDialogTheme)
-            .setTitle(title)
-            .setMessage(message)
-            .setPositiveButton("Tutup") { _, _ ->
-                closeOptionsMenu()
-            }
-            .show()
+    private fun moveToHome() {
+        Intent(this, HomeActivity::class.java).run {
+            startActivity(this)
+            finishAffinity()
+        }
+    }
+
+    private fun showToast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
     companion object {
