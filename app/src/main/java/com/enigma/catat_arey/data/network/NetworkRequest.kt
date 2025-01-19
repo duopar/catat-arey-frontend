@@ -60,3 +60,14 @@ data class UpdateProductRequest(
     @SerializedName("restockThreshold")
     val restockThreshold: Int?
 )
+
+data class ProductLogEntryRequest(
+    @SerializedName("productId")
+    val productId: String,
+
+    @SerializedName("stockIn")
+    val stockIn: Int,
+
+    @SerializedName("stockOut")
+    val stockOut: Int
+)

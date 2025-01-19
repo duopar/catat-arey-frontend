@@ -42,8 +42,11 @@ data class LoginResponse(
     @SerializedName("username")
     val username: String,
 
-    @SerializedName("token")
-    val token: String
+    @SerializedName("accessToken")
+    val accessToken: String,
+
+    @SerializedName("refreshToken")
+    val refreshToken: String
 )
 
 data class UserDataResponse(
@@ -53,11 +56,19 @@ data class UserDataResponse(
     @SerializedName("username")
     val username: String,
 
+    @SerializedName("role")
+    val role: String,
+
     @SerializedName("createdAt")
     val createdAt: EpochTimeResponse,
 
     @SerializedName("updatedAt")
     val updatedAt: EpochTimeResponse,
+)
+
+data class RefreshTokenResponse(
+    @SerializedName("accessToken")
+    val accessToken: String
 )
 
 //
@@ -110,9 +121,48 @@ data class ProductDataResponse(
     @SerializedName("restockThreshold")
     val restockThreshold: Int,
 
-    @SerializedName("createdAt")
-    val createdAt: EpochTimeResponse,
+    @SerializedName("stockInToday")
+    val stockInToday: Int,
 
-    @SerializedName("updatedAt")
-    val updatedAt: EpochTimeResponse
+    @SerializedName("stockOutToday")
+    val stockOutToday: Int,
+)
+
+data class ProductLogEntryResponse(
+    @SerializedName("productId")
+    val productId: String
+)
+
+data class ProductSaleForecastResponse(
+    @SerializedName("productId")
+    val productId: String,
+
+    @SerializedName("predictedSales")
+    val predictedSales: PredictedSales,
+
+    @SerializedName("predictedRestockDay")
+    val predictedRestockDay: String?
+)
+
+data class PredictedSales(
+    @SerializedName("mon")
+    val monday: Int,
+
+    @SerializedName("tue")
+    val tuesday: Int,
+
+    @SerializedName("wed")
+    val wednesday: Int,
+
+    @SerializedName("thu")
+    val thursday: Int,
+
+    @SerializedName("fri")
+    val friday: Int,
+
+    @SerializedName("sat")
+    val saturday: Int,
+
+    @SerializedName("sun")
+    val sunday: Int
 )

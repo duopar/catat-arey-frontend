@@ -1,5 +1,6 @@
 package com.enigma.catat_arey.data.network
 
+import android.util.Log
 import com.enigma.catat_arey.data.di.AuthenticatedApi
 import com.enigma.catat_arey.data.di.DefaultApi
 import com.enigma.catat_arey.util.ExceptionHandler
@@ -16,21 +17,57 @@ class NetworkRepository @Inject constructor(
         tokenProvider.setToken(token)
     }
 
-    suspend fun login(username: String, password: String): ResponseResult<LoginResponse> {
+    suspend fun login(username: String, password: String): ResponseResult<LoginResponse?> {
         return ApiCallWrapper.safeApiCall {
             defaultApiService.login(LoginRequest(username, password))
         }
     }
 
-    suspend fun getUserData(userId: String): ResponseResult<UserDataResponse> {
+    suspend fun updateUser(
+        userId: String,
+        currentPassword: String,
+        newPassword: String
+    ): ResponseResult<Nothing?> {
+        return ApiCallWrapper.safeApiCall {
+            authenticatedApiService.updateUser(
+                userId, UpdateUserRequest(
+                    currentPassword = currentPassword,
+                    newPassword = newPassword,
+                    confirmPassword = newPassword
+                )
+            )
+        }
+    }
+
+    suspend fun getUserData(userId: String): ResponseResult<UserDataResponse?> {
         return ApiCallWrapper.safeApiCall {
             authenticatedApiService.getUser(userId)
         }
     }
 
-    suspend fun getAllProduct(): ResponseResult<List<ProductsDataResponse>> {
+    suspend fun getAllProduct(name: String?): ResponseResult<List<ProductsDataResponse>?> {
         return ApiCallWrapper.safeApiCall {
-            authenticatedApiService.getAllProducts()
+            authenticatedApiService.getAllProducts(name)
+        }
+    }
+
+    suspend fun getProductById(productId: String): ResponseResult<ProductDataResponse?> {
+        return ApiCallWrapper.safeApiCall {
+            authenticatedApiService.getProductById(productId)
+        }
+    }
+
+    suspend fun deleteProduct(productId: String): ResponseResult<Nothing?> {
+        return ApiCallWrapper.safeApiCall {
+            authenticatedApiService.deleteProduct(productId)
+        }
+    }
+
+    suspend fun refreshToken(refreshToken: String): ResponseResult<RefreshTokenResponse?> {
+        tokenProvider.setToken(refreshToken)
+
+        return ApiCallWrapper.safeApiCall {
+            authenticatedApiService.refreshToken()
         }
     }
 
@@ -40,7 +77,7 @@ class NetworkRepository @Inject constructor(
         price: String,
         stock: String,
         restock: String
-    ): ResponseResult<AddProductResponse> {
+    ): ResponseResult<AddProductResponse?> {
         return ApiCallWrapper.safeApiCall {
             authenticatedApiService.addProduct(
                 AddProductRequest(
@@ -49,20 +86,42 @@ class NetworkRepository @Inject constructor(
             )
         }
     }
+
+    suspend fun entryProductLog(
+        productId: String,
+        stockIn: Int,
+        stockOut: Int
+    ): ResponseResult<ProductLogEntryResponse?> {
+        return ApiCallWrapper.safeApiCall {
+            authenticatedApiService.entryProductLog(
+                ProductLogEntryRequest(productId, stockIn, stockOut)
+            )
+        }
+    }
+
+    suspend fun getProductSaleForecast(productId: String): ResponseResult<List<ProductSaleForecastResponse>?> {
+        return ApiCallWrapper.safeApiCall {
+            authenticatedApiService.getSaleForecastById(productId)
+        }
+    }
 }
 
 object ApiCallWrapper {
     suspend fun <T : Any> safeApiCall(
         apiCall: suspend () -> Response<ApiResponse<T>>
-    ): ResponseResult<T> {
+    ): ResponseResult<T?> {
         return try {
             val response = apiCall()
 
             if (response.isSuccessful) {
                 val body = response.body()
-                body?.data?.let {
-                    ResponseResult.Success(it)
-                } ?: ResponseResult.Error("Empty response body")
+
+                if (response.isSuccessful) {
+                    ResponseResult.Success(body?.data)
+                } else {
+                    ResponseResult.Error("Empty response body")
+                }
+
             } else {
                 val errorBody = response.errorBody()?.string()
                 val errorResponse = try {
@@ -70,6 +129,8 @@ object ApiCallWrapper {
                 } catch (e: Exception) {
                     null
                 }
+
+                Log.d("NetworkRepository", errorBody!!)
 
                 ResponseResult.Error(errorResponse?.message ?: "Unknown error occurred")
             }
