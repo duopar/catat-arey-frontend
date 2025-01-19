@@ -21,7 +21,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/white"
-            app:menu="@menu/delete_menu"
+            app:menu="@menu/options_menu"
             app:navigationIcon="@drawable/ic_chevron_left_24"
             app:title="Product Name"
             app:titleTextAppearance="@style/ToolbarTitleStyle"

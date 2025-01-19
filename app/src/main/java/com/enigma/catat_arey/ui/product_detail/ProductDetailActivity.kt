@@ -222,6 +222,86 @@ class ProductDetailActivity : AppCompatActivity() {
                     true
                 }
 
+                R.id.edit_setting -> {
+                    if (userRole != AreyUserRole.Owner) {
+                        showUnauthorizedAccessError()
+                    } else {
+                        showCustomDialog(
+                            context = this,
+                            title = "Ubah Produk",
+                            layoutId = R.layout.dialog_edit_product_detail_layout,
+                            onPositiveAction = { dialogView, dialog ->
+                                var goodInput = true
+
+                                val edProductName =
+                                    dialogView.findViewById<EditText>(R.id.ed_product_name).text.toString()
+                                val edProductCategory =
+                                    dialogView.findViewById<EditText>(R.id.ed_product_category).text.toString()
+                                val edProductPrice =
+                                    dialogView.findViewById<EditText>(R.id.ed_product_price).text.toString()
+                                val edProductStock =
+                                    dialogView.findViewById<EditText>(R.id.ed_product_stock).text.toString()
+                                val edProductRestock =
+                                    dialogView.findViewById<EditText>(R.id.ed_product_restock_threshold).text.toString()
+
+                                if (edProductName.isEmpty() || edProductCategory.isEmpty() || edProductPrice.isEmpty() || edProductStock.isEmpty() || edProductRestock.isEmpty()) {
+                                    showToast("Silahkan isi semua data")
+                                    goodInput = false
+                                }
+
+                                if (!isProperPositiveNumber(edProductPrice) || !isProperPositiveNumber(
+                                        edProductStock
+                                    ) || !isProperPositiveNumber(
+                                        edProductRestock
+                                    )
+                                ) {
+                                    showToast("Data angka harus positif")
+                                    goodInput = false
+                                }
+
+                                if (goodInput) {
+                                    viewModel.updateProduct(
+                                        productId,
+                                        edProductName,
+                                        edProductCategory,
+                                        edProductPrice,
+                                        edProductStock,
+                                        edProductRestock
+                                    ).observe(this) {
+                                        when (it) {
+                                            is ProductDetailUiState.Error -> {
+                                                val msg = it.message
+
+                                                if (msg.lowercase().contains("network error")) {
+                                                    showNetworkError({})
+                                                } else {
+                                                    showToast("[Debug] Error - ${it.message}")
+                                                }
+
+                                            }
+
+                                            ProductDetailUiState.Loading -> {}
+                                            is ProductDetailUiState.Success -> {
+                                                showToast("Produk berhasil diubah.")
+                                                setupUI()
+                                                dialog.dismiss()
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            onDialogViewCreated = { dialogView ->
+                                dialogView.findViewById<EditText>(R.id.ed_product_name)?.setText(currentProduct.name)
+                                dialogView.findViewById<EditText>(R.id.ed_product_category)?.setText(currentProduct.category)
+                                dialogView.findViewById<EditText>(R.id.ed_product_price)?.setText(currentProduct.price.toString())
+                                dialogView.findViewById<EditText>(R.id.ed_product_stock)?.setText(currentProduct.stockLevel.toString())
+                                dialogView.findViewById<EditText>(R.id.ed_product_restock_threshold)?.setText(currentProduct.restockThreshold.toString())
+                            }
+                        )
+                    }
+                    true
+                }
+
                 else -> true
             }
         }

@@ -183,3 +183,20 @@ data class InventoryLogResponse(
     @SerializedName("stockChange")
     val stockChange: Int
 )
+
+data class UpdateProductResponse(
+    @SerializedName("name")
+    val name: String,
+
+    @SerializedName("category")
+    val category: String,
+
+    @SerializedName("price")
+    val price: Int,
+
+    @SerializedName("stockLevel")
+    val stockLevel: Int,
+
+    @SerializedName("restockThreshold")
+    val restockThreshold: Int,
+)

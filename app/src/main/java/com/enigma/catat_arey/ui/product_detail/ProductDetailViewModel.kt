@@ -3,11 +3,13 @@ package com.enigma.catat_arey.ui.product_detail
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.liveData
+import com.enigma.catat_arey.data.network.AddProductResponse
 import com.enigma.catat_arey.data.network.NetworkRepository
 import com.enigma.catat_arey.data.network.ProductDataResponse
 import com.enigma.catat_arey.data.network.ProductLogEntryResponse
 import com.enigma.catat_arey.data.network.ProductSaleForecastResponse
 import com.enigma.catat_arey.data.network.ResponseResult
+import com.enigma.catat_arey.data.network.UpdateProductResponse
 import com.enigma.catat_arey.data.network.UserDataResponse
 import com.enigma.catat_arey.data.preferences.DatastoreManager
 import com.enigma.catat_arey.ui.home.HomeUiState
@@ -101,6 +103,25 @@ class ProductDetailViewModel @Inject constructor(
                 is ResponseResult.Success -> emit(ProductDetailUiState.Success(resp.data))
             }
         }
+
+    /*
+       Used when user wants to update a selected product via form dialog
+    */
+    fun updateProduct(
+        productId: String,
+        name: String,
+        category: String,
+        price: String,
+        stock: String,
+        restock: String
+    ): LiveData<ProductDetailUiState<UpdateProductResponse>> = liveData {
+        emit(ProductDetailUiState.Loading)
+
+        when (val resp = networkRepository.updateProduct(productId ,name, category, price.toInt(), stock.toInt(), restock.toInt())) {
+            is ResponseResult.Error -> emit(ProductDetailUiState.Error(resp.message))
+            is ResponseResult.Success -> emit(ProductDetailUiState.Success(resp.data))
+        }
+    }
 }
 
 sealed interface ProductDetailUiState<out T> {

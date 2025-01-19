@@ -37,12 +37,11 @@ interface AreyApiService {
     @POST("/api/v1/products")
     suspend fun addProduct(@Body req: AddProductRequest): Response<ApiResponse<AddProductResponse>>
 
-    // Currently unused
     @PUT("/api/v1/products/{id}")
     suspend fun updateProduct(
         @Path("id") productId: String,
         @Body req: UpdateProductRequest
-    ): Response<ApiResponse<Nothing>>
+    ): Response<ApiResponse<UpdateProductResponse>>
 
     @DELETE("/api/v1/products/{id}")
     suspend fun deleteProduct(@Path("id") productId: String): Response<ApiResponse<Nothing>>

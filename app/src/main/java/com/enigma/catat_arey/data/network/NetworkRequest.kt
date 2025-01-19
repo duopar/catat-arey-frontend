@@ -52,13 +52,13 @@ data class UpdateProductRequest(
     val category: String?,
 
     @SerializedName("price")
-    val price: Int?,
+    val price: Int,
 
     @SerializedName("stockLevel")
-    val stockLevel: Int?,
+    val stockLevel: Int,
 
     @SerializedName("restockThreshold")
-    val restockThreshold: Int?
+    val restockThreshold: Int
 )
 
 data class ProductLogEntryRequest(

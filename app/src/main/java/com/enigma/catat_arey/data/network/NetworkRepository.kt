@@ -114,6 +114,22 @@ class NetworkRepository @Inject constructor(
             authenticatedApiService.getInventoryLogs()
         }
     }
+
+    suspend fun updateProduct(
+        productId: String,
+        name: String,
+        category: String,
+        price: Int,
+        stock: Int,
+        restock: Int
+    ): ResponseResult<UpdateProductResponse?> {
+        return ApiCallWrapper.safeApiCall {
+            authenticatedApiService.updateProduct(
+                productId,
+                UpdateProductRequest(name, category, price, stock, restock)
+            )
+        }
+    }
 }
 
 object ApiCallWrapper {

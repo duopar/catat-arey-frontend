@@ -4,9 +4,12 @@
     <group android:menuCategory="container">
         <item
             android:id="@+id/delete_setting"
-            android:icon="@drawable/ic_delete_outline_24"
-            android:title="Delete"
-            app:showAsAction="always" />
+            android:title="Hapus Produk"
+            app:showAsAction="never" />
 
+        <item
+            android:id="@+id/edit_setting"
+            android:title="Ubah Produk"
+            app:showAsAction="never" />
     </group>
 </menu>
