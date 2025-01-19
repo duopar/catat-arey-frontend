@@ -19,6 +19,7 @@ import com.enigma.catat_arey.util.GeneralUtil.isValidPassword
 import com.enigma.catat_arey.util.LoadingDialog
 import com.enigma.catat_arey.util.showCustomDialog
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.runBlocking
 
 @AndroidEntryPoint
 class SettingActivity : AppCompatActivity() {
@@ -64,6 +65,16 @@ class SettingActivity : AppCompatActivity() {
                     binding.tvGreetings.text =
                         getString(R.string.setting_greeting, it.data!!.username)
                 }
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        runBlocking {
+            if (viewModel.shouldRefreshApp()) {
+                gracefulExit()
             }
         }
     }
@@ -199,6 +210,21 @@ class SettingActivity : AppCompatActivity() {
             message = "Silahkan coba lagi atau hubungi administrator jika berkelanjutan.",
             buttonText = "Coba Lagi",
             onButtonClick = onButtonClick
+        )
+    }
+
+    private fun gracefulExit() {
+        ErrorPopupDialog.showError(
+            context = this,
+            title = "Sesi Berakhir",
+            message = "Silahkan lakukan login kembali atau mulai ulang aplikasi.",
+            buttonText = "Tutup",
+            onButtonClick = {
+                Intent(this, MainActivity::class.java).run {
+                    startActivity(this)
+                }
+                finishAffinity()
+            }
         )
     }
 

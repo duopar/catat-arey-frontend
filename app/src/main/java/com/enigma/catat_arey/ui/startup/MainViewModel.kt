@@ -40,6 +40,15 @@ class MainViewModel @Inject constructor(
     }
 
     /*
+        If both access and refresh token are near expiry, direct user to re-login with credentials
+     */
+    suspend fun mustRelogin(): Boolean {
+        val epoch = (System.currentTimeMillis() / 1000) - 3600
+
+        return (datastoreManager.currentUserTokenExpiry.first() < epoch) && (datastoreManager.currentRefreshTokenExpiry.first() < epoch)
+    }
+
+    /*
         Call on email-pass login
      */
     fun getTokenFromLogin(username: String, password: String): LiveData<MainUiState<List<String>>> =
@@ -80,7 +89,7 @@ class MainViewModel @Inject constructor(
                 val refreshToken = token.refreshToken
 
                 // If Access token expired, refresh
-                if (System.currentTimeMillis() / 1000 > GeneralUtil.getJwtExpiry(accessToken)) {
+                if (System.currentTimeMillis() / 1000 > datastoreManager.currentUserTokenExpiry.first()) {
                     Log.d(
                         "MainViewModel",
                         "Access Token Expired ${GeneralUtil.getJwtExpiry(accessToken)}."
@@ -95,6 +104,11 @@ class MainViewModel @Inject constructor(
                             accessToken = refresh.data!!.accessToken
                             reencryptTokenRequired = true
                             networkRepository.updateToken(accessToken)
+                            datastoreManager.updateUserTokenExpiry(
+                                GeneralUtil.getJwtExpiry(
+                                    accessToken
+                                )
+                            )
                             emit(
                                 MainUiState.Success(
                                     GeneralUtil.createUserTokenString(

@@ -22,6 +22,7 @@ import com.enigma.catat_arey.databinding.ActivityHomeBinding
 import com.enigma.catat_arey.ui.product_detail.ProductDetailActivity
 import com.enigma.catat_arey.ui.product_detail.ProductDetailActivity.Companion.EXTRA_PRODUCT_ID
 import com.enigma.catat_arey.ui.setting.SettingActivity
+import com.enigma.catat_arey.ui.startup.MainActivity
 import com.enigma.catat_arey.util.AreyUserRole
 import com.enigma.catat_arey.util.ErrorPopupDialog
 import com.enigma.catat_arey.util.GeneralUtil
@@ -29,6 +30,7 @@ import com.enigma.catat_arey.util.GeneralUtil.isProperPositiveNumber
 import com.enigma.catat_arey.util.showCustomDialog
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 @AndroidEntryPoint
 class HomeActivity : AppCompatActivity() {
@@ -93,7 +95,34 @@ class HomeActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+
+        runBlocking {
+            if (viewModel.shouldRefreshApp()) {
+                gracefulExit()
+            }
+        }
+
         viewModel.retrieveAllProducts(null)
+
+        viewModel.getInventoryLogs().observe(this) {
+            when (it) {
+                is HomeUiState.Error -> {
+                }
+
+                HomeUiState.Loading -> {
+                    binding.tvSumIn.text = "-"
+                    binding.tvSumOut.text = "-"
+                }
+
+                is HomeUiState.Success -> {
+                    val data = it.data!!
+                    val sum = GeneralUtil.getDailySum(data)
+
+                    binding.tvSumIn.text = sum.stockIn.toString()
+                    binding.tvSumOut.text = sum.stockOut.toString()
+                }
+            }
+        }
     }
 
     private fun setupUserData() {
@@ -280,9 +309,24 @@ class HomeActivity : AppCompatActivity() {
         ErrorPopupDialog.showError(
             context = this,
             title = "Kesalahan Jaringan",
-            message = "Silahkan coba lagi atau hubungi administrator jika berkelanjutan.",
+            message = "Silahkan coba lagi atau hubungi admin aplikasi jika berkelanjutan.",
             buttonText = "Coba Lagi",
             onButtonClick = onButtonClick
+        )
+    }
+
+    private fun gracefulExit() {
+        ErrorPopupDialog.showError(
+            context = this,
+            title = "Sesi Berakhir",
+            message = "Silahkan lakukan login kembali atau mulai ulang aplikasi.",
+            buttonText = "Tutup",
+            onButtonClick = {
+                Intent(this, MainActivity::class.java).run {
+                    startActivity(this)
+                }
+                finishAffinity()
+            }
         )
     }
 

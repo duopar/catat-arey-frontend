@@ -1,5 +1,6 @@
 package com.enigma.catat_arey.ui.product_detail
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.EditText
@@ -13,13 +14,18 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.enigma.catat_arey.R
 import com.enigma.catat_arey.data.network.ProductDataResponse
 import com.enigma.catat_arey.databinding.ActivityProductDetailBinding
+import com.enigma.catat_arey.ui.home.HomeUiState
+import com.enigma.catat_arey.ui.startup.MainActivity
+import com.enigma.catat_arey.util.AreyUserRole
 import com.enigma.catat_arey.util.ErrorPopupDialog
+import com.enigma.catat_arey.util.GeneralUtil
 import com.enigma.catat_arey.util.GeneralUtil.createForecastList
 import com.enigma.catat_arey.util.GeneralUtil.isProperPositiveNumber
 import com.enigma.catat_arey.util.LoadingDialog
 import com.enigma.catat_arey.util.showCustomDialog
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.runBlocking
 
 @AndroidEntryPoint
 class ProductDetailActivity : AppCompatActivity() {
@@ -30,6 +36,8 @@ class ProductDetailActivity : AppCompatActivity() {
     private lateinit var currentProduct: ProductDataResponse
 
     private lateinit var productForecastAdapter: ProductForecastAdapter
+
+    private lateinit var userRole: AreyUserRole
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,11 +64,38 @@ class ProductDetailActivity : AppCompatActivity() {
             insets
         }
 
+        setupUserData()
         setupUI()
         setupRecyclerView()
         setupListener()
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        runBlocking {
+            if (viewModel.shouldRefreshApp()) {
+                gracefulExit()
+            }
+        }
 
         displayForecast()
+    }
+
+    private fun setupUserData() {
+        viewModel.getCurrentUserData().observe(this) {
+            when (it) {
+                is HomeUiState.Error -> {
+                }
+
+                HomeUiState.Loading -> {}
+                is HomeUiState.Success -> {
+                    val user = it.data!!
+
+                    userRole = GeneralUtil.getUserRole(user.role)
+                }
+            }
+        }
     }
 
     private fun setupUI() {
@@ -76,7 +111,6 @@ class ProductDetailActivity : AppCompatActivity() {
                     binding.tvSumTotal.text = "-"
                     binding.tvSumIn.text = "-"
                     binding.tvSumOut.text = "-"
-                    binding.tvProductList.text = "-"
                 }
 
                 is ProductDetailUiState.Success -> {
@@ -87,7 +121,6 @@ class ProductDetailActivity : AppCompatActivity() {
                     binding.tvSumTotal.text = currentProduct.stockLevel.toString()
                     binding.tvSumIn.text = currentProduct.stockInToday.toString()
                     binding.tvSumOut.text = currentProduct.stockOutToday.toString()
-                    binding.tvProductList.text = product.name
                 }
             }
         }
@@ -100,6 +133,8 @@ class ProductDetailActivity : AppCompatActivity() {
     }
 
     private fun displayForecast() {
+        setupRecyclerView()
+
         viewModel.getForecast(productId).observe(this) {
             when (it) {
                 is ProductDetailUiState.Error -> {
@@ -130,6 +165,8 @@ class ProductDetailActivity : AppCompatActivity() {
                         if (forecasts.isEmpty()) {
                             binding.tvRvMessage.visibility = View.VISIBLE
                             binding.tvRvMessage.text = "Data Belum Cukup untuk Fitur Prediksi."
+                        } else {
+                            binding.tvRvMessage.visibility = View.GONE
                         }
 
                         productForecastAdapter.submitList(forecasts)
@@ -144,40 +181,44 @@ class ProductDetailActivity : AppCompatActivity() {
         binding.topAppBar.setOnMenuItemClickListener {
             when (it.itemId) {
                 R.id.delete_setting -> {
-                    MaterialAlertDialogBuilder(this)
-                        .setTitle(currentProduct.name)
-                        .setMessage("Delete produk?")
-                        .setNegativeButton("Cancel") { dialog, which ->
-                            dialog.dismiss()
-                        }
-                        .setPositiveButton("Yes") { dialog, which ->
-                            viewModel.deleteProduct(productId).observe(this) {
-                                when (it) {
-                                    is ProductDetailUiState.Error -> {
-                                        setGlobalLoading(false)
+                    if (userRole != AreyUserRole.Owner) {
+                        showUnauthorizedAccessError()
+                    } else {
+                        MaterialAlertDialogBuilder(this)
+                            .setTitle(currentProduct.name)
+                            .setMessage("Delete produk?")
+                            .setNegativeButton("Cancel") { dialog, which ->
+                                dialog.dismiss()
+                            }
+                            .setPositiveButton("Yes") { dialog, which ->
+                                viewModel.deleteProduct(productId).observe(this) {
+                                    when (it) {
+                                        is ProductDetailUiState.Error -> {
+                                            setGlobalLoading(false)
 
-                                        val msg = it.message
+                                            val msg = it.message
 
-                                        if (msg.lowercase().contains("network error")) {
-                                            showNetworkError {}
-                                        } else {
-                                            showToast("Error: ${it.message}")
+                                            if (msg.lowercase().contains("network error")) {
+                                                showNetworkError {}
+                                            } else {
+                                                showToast("Error: ${it.message}")
+                                            }
                                         }
-                                    }
 
-                                    ProductDetailUiState.Loading -> {
-                                        setGlobalLoading(true)
-                                    }
+                                        ProductDetailUiState.Loading -> {
+                                            setGlobalLoading(true)
+                                        }
 
-                                    is ProductDetailUiState.Success -> {
-                                        setGlobalLoading(false)
-                                        showToast("Produk berhasil dihapus.")
-                                        finish()
+                                        is ProductDetailUiState.Success -> {
+                                            setGlobalLoading(false)
+                                            showToast("Produk berhasil dihapus.")
+                                            finish()
+                                        }
                                     }
                                 }
                             }
-                        }
-                        .show()
+                            .show()
+                    }
                     true
                 }
 
@@ -230,6 +271,7 @@ class ProductDetailActivity : AppCompatActivity() {
                                     setGlobalLoading(false)
                                     showToast("Entri produk berhasil.")
                                     setupUI()
+                                    displayForecast()
                                     dialog.dismiss()
                                 }
                             }
@@ -266,6 +308,15 @@ class ProductDetailActivity : AppCompatActivity() {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
+    private fun showUnauthorizedAccessError() {
+        ErrorPopupDialog.showError(
+            context = this,
+            title = "Aksi Tidak Diizinkan",
+            message = "Hanya Owner yang dapat melakukan aksi ini.",
+            buttonText = "Tutup"
+        )
+    }
+
     private fun showNetworkError(onButtonClick: () -> Unit) {
         ErrorPopupDialog.hideError()
         ErrorPopupDialog.showError(
@@ -274,6 +325,21 @@ class ProductDetailActivity : AppCompatActivity() {
             message = "Silahkan coba lagi atau hubungi administrator jika berkelanjutan.",
             buttonText = "Coba Lagi",
             onButtonClick = onButtonClick
+        )
+    }
+
+    private fun gracefulExit() {
+        ErrorPopupDialog.showError(
+            context = this,
+            title = "Sesi Berakhir",
+            message = "Silahkan lakukan login kembali atau mulai ulang aplikasi.",
+            buttonText = "Tutup",
+            onButtonClick = {
+                Intent(this, MainActivity::class.java).run {
+                    startActivity(this)
+                }
+                finishAffinity()
+            }
         )
     }
 

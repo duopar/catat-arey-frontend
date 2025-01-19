@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.liveData
 import androidx.lifecycle.viewModelScope
 import com.enigma.catat_arey.data.network.AddProductResponse
+import com.enigma.catat_arey.data.network.InventoryLogResponse
 import com.enigma.catat_arey.data.network.NetworkRepository
 import com.enigma.catat_arey.data.network.ProductsDataResponse
 import com.enigma.catat_arey.data.network.ResponseResult
@@ -30,6 +31,32 @@ class HomeViewModel @Inject constructor(
     private val _allProducts =
         MutableStateFlow<HomeUiState<List<ProductsDataResponse>>>(HomeUiState.Loading)
     val allProducts: StateFlow<HomeUiState<List<ProductsDataResponse>>> = _allProducts.asStateFlow()
+
+    /*
+        Direct user to refresh the app (token) for prolonged usage
+     */
+    suspend fun shouldRefreshApp(): Boolean {
+        val expiry = datastoreManager.currentUserTokenExpiry.first()
+
+        // if access token lifetime is less than 1 hour
+        if ((expiry - System.currentTimeMillis() / 1000) < 3600) {
+            return true
+        }
+
+        return false
+    }
+
+    /*
+        Used when activity startup and retries
+     */
+    fun getInventoryLogs(): LiveData<HomeUiState<List<InventoryLogResponse>>> = liveData {
+        emit(HomeUiState.Loading)
+
+        when (val resp = networkRepository.getInventoryLogs()) {
+            is ResponseResult.Error -> emit(HomeUiState.Error(resp.message))
+            is ResponseResult.Success -> emit(HomeUiState.Success(resp.data))
+        }
+    }
 
     /*
         Used when activity startup and retries

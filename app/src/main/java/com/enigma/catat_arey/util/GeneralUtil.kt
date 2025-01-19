@@ -1,10 +1,12 @@
 package com.enigma.catat_arey.util
 
+import com.enigma.catat_arey.data.network.InventoryLogResponse
 import com.enigma.catat_arey.data.network.ProductSaleForecastResponse
 import com.enigma.catat_arey.ui.product_detail.ProductForecast
 import org.json.JSONObject
 import java.text.NumberFormat
 import java.time.DayOfWeek
+import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -40,7 +42,7 @@ object GeneralUtil {
         try {
             return input.isNotBlank() &&
                     input.contains(Regex("^\\d+$")) &&
-                    input.toIntOrNull()?.let { it > 0 } ?: false
+                    input.toIntOrNull()?.let { it >= 0 } ?: false
         } catch (e: Exception) {
             return false
         }
@@ -86,6 +88,21 @@ object GeneralUtil {
             accessToken = tokens[0],
             refreshToken = tokens[1]
         )
+    }
+
+    fun getDailySum(data: List<InventoryLogResponse>): DailySum {
+        val today = LocalDate.now()
+        val todaysLogs = data.filter { log ->
+            val logDate = Instant.ofEpochSecond(log.createdAt.secondsInEpoch)
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate()
+            logDate == today
+        }
+
+        val stockIn = todaysLogs.filter { it.changeType == "stockIn" }.sumOf { it.stockChange }
+        val stockOut = todaysLogs.filter { it.changeType == "stockOut" }.sumOf { it.stockChange }
+
+        return DailySum(stockIn, stockOut)
     }
 
     fun createForecastList(data: ProductSaleForecastResponse): List<ProductForecast> {
@@ -140,5 +157,10 @@ object GeneralUtil {
     data class UserToken(
         val accessToken: String,
         val refreshToken: String
+    )
+
+    data class DailySum(
+        var stockIn: Int,
+        var stockOut: Int
     )
 }

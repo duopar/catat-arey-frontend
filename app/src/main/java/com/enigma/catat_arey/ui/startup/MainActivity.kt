@@ -20,6 +20,7 @@ import com.enigma.catat_arey.util.AreyCrypto.getBiometricDecryptionCipher
 import com.enigma.catat_arey.util.AreyCrypto.getBiometricEncryptionCipher
 import com.enigma.catat_arey.util.AreyCrypto.getDefaultDecryptionCipher
 import com.enigma.catat_arey.util.AreyCrypto.getDefaultEncryptionCipher
+import com.enigma.catat_arey.util.ErrorPopupDialog
 import com.enigma.catat_arey.util.GCMEnvelope
 import com.enigma.catat_arey.util.GeneralUtil
 import com.enigma.catat_arey.util.LoadingDialog
@@ -84,11 +85,11 @@ class MainActivity : AppCompatActivity() {
                                 .observe(this@MainActivity) {
                                     when (it) {
                                         is MainUiState.Error -> {
-                                            showToast("[Debug] ERROR - ${it.message}")
+                                            showToast("Error: ${it.message}")
                                         }
 
                                         is MainUiState.Success -> {
-                                            showToast("[Debug] Token Saved (biometric)")
+                                            // showToast("[Debug] Token Saved (biometric)")
                                             moveToHome()
                                         }
 
@@ -108,12 +109,12 @@ class MainActivity : AppCompatActivity() {
                                     when (it) {
                                         is MainUiState.Error -> {
                                             setGlobalLoading(false)
-                                            showToast("[Debug] ERROR - ${it.message}")
+                                            showToast("Error: ${it.message}")
                                         }
 
                                         is MainUiState.Success -> {
                                             setGlobalLoading(false)
-                                            showToast("[Debug] Ok")
+                                            // showToast("[Debug] Ok")
                                             if (viewModel.isTokenReencryptionRequired()) {
                                                 tokenCipherMode = Cipher.ENCRYPT_MODE
                                                 tokenCipher = getBiometricEncryptionCipher()
@@ -130,17 +131,17 @@ class MainActivity : AppCompatActivity() {
                                                         when (it) {
                                                             is MainUiState.Error -> {
                                                                 setGlobalLoading(false)
-                                                                showToast("[Debug] ${it.message}")
+                                                                showToast("Error: ${it.message}")
                                                             }
 
                                                             MainUiState.Loading -> {
                                                                 setGlobalLoading(true)
-                                                                showToast("[Debug] Loading updateUserToken")
+                                                                // showToast("[Debug] Loading updateUserToken")
                                                             }
 
                                                             is MainUiState.Success -> {
                                                                 setGlobalLoading(false)
-                                                                showToast("[Debug] Ok - reencryption without reprompting")
+                                                                // showToast("[Debug] Ok - reencryption without reprompting")
                                                                 moveToHome()
                                                             }
                                                         }
@@ -213,68 +214,14 @@ class MainActivity : AppCompatActivity() {
                     when (state) {
                         is MainUiState.Success -> {
                             canAutoLogin = state.data!!
-                            if (canAutoLogin) { // User has logged in before, feasible biometric
-                                runBlocking {
-                                    val _userToken = viewModel.getUserToken()
+                            val mustRelogin = viewModel.mustRelogin()
 
-                                    encryptedToken = GCMEnvelope(
-                                        iv = _userToken.copyOfRange(0, AreyCrypto.GCM_IV_SIZE),
-                                        data = _userToken.copyOfRange(
-                                            AreyCrypto.GCM_IV_SIZE,
-                                            _userToken.size
-                                        ),
-                                        aad = AreyCrypto.getDefaultAAD().encodeToByteArray()
-                                    )
-                                }
+                            if (canAutoLogin && mustRelogin) {
+                                gracefulRelogin()
+                            }
 
-                                tokenCipherMode = Cipher.DECRYPT_MODE
-
-                                if (deviceSupportBiometric) { // Device can do biometric
-                                    tokenCipher =
-                                        getBiometricDecryptionCipher(encryptedToken.iv)
-                                    biometricPrompt.authenticate(
-                                        promptInfo,
-                                        BiometricPrompt.CryptoObject(tokenCipher)
-                                    )
-                                } else {
-                                    tokenCipher =
-                                        getDefaultDecryptionCipher(encryptedToken.iv)
-                                    viewModel.getTokenFromDatastore(
-                                        tokenCipher,
-                                        encryptedToken
-                                    )
-                                        .observe(this@MainActivity) {
-                                            when (it) {
-                                                is MainUiState.Error -> {
-                                                    setGlobalLoading(false)
-                                                    showToast("[Debug] ERROR - ${it.message}")
-                                                }
-
-                                                is MainUiState.Success -> {
-                                                    setGlobalLoading(false)
-                                                    showToast("[Debug] Ok (non-biometric)")
-                                                    if (viewModel.isTokenReencryptionRequired()) {
-                                                        tokenCipherMode = Cipher.ENCRYPT_MODE
-                                                        tokenCipher = getDefaultEncryptionCipher()
-                                                        val accessEnvelope = GCMEnvelope(
-                                                            data = it.data!!.encodeToByteArray(),
-                                                            aad = AreyCrypto.getDefaultAAD()
-                                                                .encodeToByteArray()
-                                                        )
-                                                        viewModel.updateUserToken(
-                                                            tokenCipher,
-                                                            accessEnvelope
-                                                        )
-                                                    }
-                                                    moveToHome()
-                                                }
-
-                                                MainUiState.Loading -> {
-                                                    setGlobalLoading(true)
-                                                }
-                                            }
-                                        }
-                                }
+                            if (canAutoLogin && !mustRelogin) { // User has logged in before, feasible biometric
+                                promptBiometricLogin()
                             }
                             it.remove()
                         }
@@ -283,7 +230,7 @@ class MainActivity : AppCompatActivity() {
                         }
 
                         is MainUiState.Error -> {
-                            showToast("[Debug] error - $it")
+                            showToast("Error: $it")
                         }
                     }
                 }
@@ -291,6 +238,16 @@ class MainActivity : AppCompatActivity() {
         }
 
         setupListener()
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        runBlocking {
+            if (canAutoLogin && !viewModel.mustRelogin()) {
+                promptBiometricLogin()
+            }
+        }
     }
 
     private fun setupListener() {
@@ -342,12 +299,12 @@ class MainActivity : AppCompatActivity() {
                                         when (it) {
                                             is MainUiState.Error -> {
                                                 setGlobalLoading(false)
-                                                showToast("[Debug] ERROR - ${it.message}")
+                                                showToast("Error: ${it.message}")
                                             }
 
                                             is MainUiState.Success -> {
                                                 setGlobalLoading(false)
-                                                showToast("[Debug] Token Saved (non-biometric)")
+                                                // showToast("[Debug] Token Saved (non-biometric)")
                                                 moveToHome()
                                             }
 
@@ -370,6 +327,70 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun promptBiometricLogin() {
+        runBlocking {
+            val _userToken = viewModel.getUserToken()
+
+            encryptedToken = GCMEnvelope(
+                iv = _userToken.copyOfRange(0, AreyCrypto.GCM_IV_SIZE),
+                data = _userToken.copyOfRange(
+                    AreyCrypto.GCM_IV_SIZE,
+                    _userToken.size
+                ),
+                aad = AreyCrypto.getDefaultAAD().encodeToByteArray()
+            )
+        }
+
+        tokenCipherMode = Cipher.DECRYPT_MODE
+
+        if (deviceSupportBiometric) { // Device can do biometric
+            tokenCipher =
+                getBiometricDecryptionCipher(encryptedToken.iv)
+            biometricPrompt.authenticate(
+                promptInfo,
+                BiometricPrompt.CryptoObject(tokenCipher)
+            )
+        } else {
+            tokenCipher =
+                getDefaultDecryptionCipher(encryptedToken.iv)
+            viewModel.getTokenFromDatastore(
+                tokenCipher,
+                encryptedToken
+            )
+                .observe(this@MainActivity) {
+                    when (it) {
+                        is MainUiState.Error -> {
+                            setGlobalLoading(false)
+                            showToast("Error: ${it.message}")
+                        }
+
+                        is MainUiState.Success -> {
+                            setGlobalLoading(false)
+                            // showToast("[Debug] Ok (non-biometric)")
+                            if (viewModel.isTokenReencryptionRequired()) {
+                                tokenCipherMode = Cipher.ENCRYPT_MODE
+                                tokenCipher = getDefaultEncryptionCipher()
+                                val accessEnvelope = GCMEnvelope(
+                                    data = it.data!!.encodeToByteArray(),
+                                    aad = AreyCrypto.getDefaultAAD()
+                                        .encodeToByteArray()
+                                )
+                                viewModel.updateUserToken(
+                                    tokenCipher,
+                                    accessEnvelope
+                                )
+                            }
+                            moveToHome()
+                        }
+
+                        MainUiState.Loading -> {
+                            setGlobalLoading(true)
+                        }
+                    }
+                }
+        }
+    }
+
     private fun moveToHome() {
         Intent(this, HomeActivity::class.java).run {
             startActivity(this)
@@ -379,6 +400,15 @@ class MainActivity : AppCompatActivity() {
 
     private fun showToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun gracefulRelogin() {
+        ErrorPopupDialog.showError(
+            context = this,
+            title = "Sesi Berakhir",
+            message = "Silahkan lakukan login kembali dengan email dan password anda.",
+            buttonText = "Tutup"
+        )
     }
 
     private fun setGlobalLoading(state: Boolean) {

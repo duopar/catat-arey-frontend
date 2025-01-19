@@ -8,13 +8,44 @@ import com.enigma.catat_arey.data.network.ProductDataResponse
 import com.enigma.catat_arey.data.network.ProductLogEntryResponse
 import com.enigma.catat_arey.data.network.ProductSaleForecastResponse
 import com.enigma.catat_arey.data.network.ResponseResult
+import com.enigma.catat_arey.data.network.UserDataResponse
+import com.enigma.catat_arey.data.preferences.DatastoreManager
+import com.enigma.catat_arey.ui.home.HomeUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
 @HiltViewModel
 class ProductDetailViewModel @Inject constructor(
+    private val datastoreManager: DatastoreManager,
     private val networkRepository: NetworkRepository
 ) : ViewModel() {
+
+    /*
+        Direct user to refresh the app (token) for prolonged usage
+     */
+    suspend fun shouldRefreshApp(): Boolean {
+        val expiry = datastoreManager.currentUserTokenExpiry.first()
+
+        // if access token lifetime is less than 1 hour
+        if ((expiry - System.currentTimeMillis() / 1000) < 3600) {
+            return true
+        }
+
+        return false
+    }
+
+    /*
+        Used when activity startup and retries
+     */
+    fun getCurrentUserData(): LiveData<HomeUiState<UserDataResponse>> = liveData {
+        emit(HomeUiState.Loading)
+
+        when (val resp = networkRepository.getUserData(datastoreManager.currentUserId.first())) {
+            is ResponseResult.Error -> emit(HomeUiState.Error(resp.message))
+            is ResponseResult.Success -> emit(HomeUiState.Success(resp.data))
+        }
+    }
 
     /*
         Used when activity startup and retries

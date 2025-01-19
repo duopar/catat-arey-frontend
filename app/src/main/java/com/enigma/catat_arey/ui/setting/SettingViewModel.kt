@@ -19,6 +19,20 @@ class SettingViewModel @Inject constructor(
 ) : ViewModel() {
 
     /*
+        Direct user to refresh the app (token) for prolonged usage
+     */
+    suspend fun shouldRefreshApp(): Boolean {
+        val expiry = datastoreManager.currentUserTokenExpiry.first()
+
+        // if access token lifetime is less than 1 hour
+        if ((expiry - System.currentTimeMillis() / 1000) < 3600) {
+            return true
+        }
+
+        return false
+    }
+
+    /*
         Used when activity startup and retries
      */
     fun getCurrentUserData(): LiveData<HomeUiState<UserDataResponse>> = liveData {
