@@ -1,7 +1,11 @@
 package com.enigma.catat_arey.ui.home
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
 import android.content.Intent
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.View
 import android.widget.EditText
 import android.widget.Toast
@@ -15,7 +19,13 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.enigma.catat_arey.R
 import com.enigma.catat_arey.data.network.ProductsDataResponse
 import com.enigma.catat_arey.databinding.ActivityHomeBinding
+import com.enigma.catat_arey.ui.product_detail.ProductDetailActivity
+import com.enigma.catat_arey.ui.product_detail.ProductDetailActivity.Companion.EXTRA_PRODUCT_ID
 import com.enigma.catat_arey.ui.setting.SettingActivity
+import com.enigma.catat_arey.util.AreyUserRole
+import com.enigma.catat_arey.util.ErrorPopupDialog
+import com.enigma.catat_arey.util.GeneralUtil
+import com.enigma.catat_arey.util.GeneralUtil.isProperPositiveNumber
 import com.enigma.catat_arey.util.showCustomDialog
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -26,8 +36,11 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var productListAdapter: ProductListAdapter
     private val viewModel: HomeViewModel by viewModels()
 
+    private lateinit var userRole: AreyUserRole
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         enableEdgeToEdge()
         setTheme(R.style.Theme_CatatArey)
         actionBar?.hide()
@@ -40,28 +53,36 @@ class HomeActivity : AppCompatActivity() {
         }
 
         setupListener()
+        setupUserData()
         setupRecyclerView()
-
-        viewModel.getCurrentUserData().observe(this) {
-            when (it) {
-                is HomeUiState.Error -> showToast("[Debug] Error: ${it.message}")
-                HomeUiState.Loading -> {}
-                is HomeUiState.Success -> {
-                    showToast("[Debug] Logged in: ${it.data!!.username}")
-                }
-            }
-        }
 
         lifecycleScope.launch {
             viewModel.allProducts.collect { result ->
                 when (result) {
                     is HomeUiState.Error -> {
                         binding.loadingProductList.visibility = View.GONE
-                        showToast("[Debug] $result")
+                        if (result.message.contains("No products found")) {
+                            binding.tvProductListError.text = "Produk tidak ditemukan."
+                            animateCrossFade(binding.tvProductListError, binding.rvProductList)
+                        } else {
+                            animateCrossFade(binding.tvProductListError, binding.rvProductList)
+                            binding.rvProductList.visibility = View.INVISIBLE
+                            binding.tvProductListError.text = ""
+                            if (result.message.lowercase().contains("network error")) {
+                                showNetworkError({
+                                    viewModel.retrieveAllProducts(null)
+                                    setupUserData()
+                                })
+                            } else {
+                                showToast("[Debug] Error: ${result.message}")
+                            }
+                        }
                     }
 
                     HomeUiState.Loading -> binding.loadingProductList.visibility = View.VISIBLE
+
                     is HomeUiState.Success -> {
+                        animateCrossFade(binding.rvProductList, binding.tvProductListError)
                         binding.loadingProductList.visibility = View.GONE
                         displayProductList(result.data!!)
                     }
@@ -72,13 +93,42 @@ class HomeActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        viewModel.retrieveAllProducts()
+        viewModel.retrieveAllProducts(null)
+    }
+
+    private fun setupUserData() {
+        viewModel.getCurrentUserData().observe(this) {
+            when (it) {
+                is HomeUiState.Error -> {
+                }
+
+                HomeUiState.Loading -> {}
+                is HomeUiState.Success -> {
+                    val user = it.data!!
+
+                    // showToast("[Debug] Logged in: ${user.username}")
+                    userRole = GeneralUtil.getUserRole(user.role)
+
+                    if (userRole != AreyUserRole.Owner) {
+                        binding.clAddProduct.background.setTint(resources.getColor(R.color.greyedOut))
+                    }
+                }
+            }
+        }
     }
 
     private fun setupRecyclerView() {
-        productListAdapter = ProductListAdapter { product ->
-            showToast("[Debug] ${product.name}")
-        }
+        productListAdapter = ProductListAdapter(
+            onClick = { product ->
+                Intent(this, ProductDetailActivity::class.java).run {
+                    putExtra(EXTRA_PRODUCT_ID, product.productId)
+                    startActivity(this)
+                }
+            },
+            onLongPress = { product ->
+
+            }
+        )
         binding.rvProductList.layoutManager = LinearLayoutManager(this)
         binding.rvProductList.adapter = productListAdapter
     }
@@ -89,63 +139,93 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun setupListener() {
+
         binding.topAppBar.setNavigationOnClickListener {
             onBackPressedDispatcher.onBackPressed()
         }
 
+        binding.edSearchProduct.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+            }
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                viewModel.retrieveAllProducts(s.toString())
+            }
+
+            override fun afterTextChanged(s: Editable?) {
+            }
+
+        })
+
         binding.clAddProduct.setOnClickListener {
-            showCustomDialog(
-                context = this,
-                title = "Tambah Produk",
-                layoutId = R.layout.dialog_add_product_layout,
-                onPositiveAction = { dialogView, dialog ->
-                    var goodInput = true
+            if (userRole != AreyUserRole.Owner) {
+                showUnauthorizedAccessError()
+            } else {
+                showCustomDialog(
+                    context = this,
+                    title = "Tambah Produk",
+                    layoutId = R.layout.dialog_add_product_layout,
+                    onPositiveAction = { dialogView, dialog ->
+                        var goodInput = true
 
-                    val edProductName =
-                        dialogView.findViewById<EditText>(R.id.ed_product_name).text.toString()
-                    val edProductCategory =
-                        dialogView.findViewById<EditText>(R.id.ed_product_category).text.toString()
-                    val edProductPrice =
-                        dialogView.findViewById<EditText>(R.id.ed_product_price).text.toString()
-                    val edProductStock =
-                        dialogView.findViewById<EditText>(R.id.ed_product_stock).text.toString()
-                    val edProductRestock =
-                        dialogView.findViewById<EditText>(R.id.ed_product_restock_threshold).text.toString()
+                        val edProductName =
+                            dialogView.findViewById<EditText>(R.id.ed_product_name).text.toString()
+                        val edProductCategory =
+                            dialogView.findViewById<EditText>(R.id.ed_product_category).text.toString()
+                        val edProductPrice =
+                            dialogView.findViewById<EditText>(R.id.ed_product_price).text.toString()
+                        val edProductStock =
+                            dialogView.findViewById<EditText>(R.id.ed_product_stock).text.toString()
+                        val edProductRestock =
+                            dialogView.findViewById<EditText>(R.id.ed_product_restock_threshold).text.toString()
 
-                    if (edProductName.isEmpty() || edProductCategory.isEmpty() || edProductPrice.isEmpty() || edProductStock.isEmpty() || edProductRestock.isEmpty()) {
-                        showToast("Silahkan isi semua data")
-                        goodInput = false
-                    }
+                        if (edProductName.isEmpty() || edProductCategory.isEmpty() || edProductPrice.isEmpty() || edProductStock.isEmpty() || edProductRestock.isEmpty()) {
+                            showToast("Silahkan isi semua data")
+                            goodInput = false
+                        }
 
-                    if (!properNumber(edProductPrice) || !properNumber(edProductStock) || !properNumber(
-                            edProductRestock
-                        )
-                    ) {
-                        showToast("Data angka harus positif")
-                        goodInput = false
-                    }
+                        if (!isProperPositiveNumber(edProductPrice) || !isProperPositiveNumber(
+                                edProductStock
+                            ) || !isProperPositiveNumber(
+                                edProductRestock
+                            )
+                        ) {
+                            showToast("Data angka harus positif")
+                            goodInput = false
+                        }
 
-                    if (goodInput) {
-                        viewModel.addNewProduct(
-                            edProductName,
-                            edProductCategory,
-                            edProductPrice,
-                            edProductStock,
-                            edProductRestock
-                        ).observe(this) {
-                            when (it) {
-                                is HomeUiState.Error -> showToast("[Debug] Error - $it")
-                                HomeUiState.Loading -> {}
-                                is HomeUiState.Success -> {
-                                    showToast("[Debug] Ok - ${it.data!!.productId}")
-                                    viewModel.retrieveAllProducts()
-                                    dialog.dismiss()
+                        if (goodInput) {
+                            viewModel.addNewProduct(
+                                edProductName,
+                                edProductCategory,
+                                edProductPrice,
+                                edProductStock,
+                                edProductRestock
+                            ).observe(this) {
+                                when (it) {
+                                    is HomeUiState.Error -> {
+                                        val msg = it.message
+
+                                        if (msg.lowercase().contains("network error")) {
+                                            showNetworkError({})
+                                        } else {
+                                            showToast("[Debug] Error - ${it.message}")
+                                        }
+
+                                    }
+
+                                    HomeUiState.Loading -> {}
+                                    is HomeUiState.Success -> {
+                                        showToast("Produk berhasil ditambah.")
+                                        viewModel.retrieveAllProducts(null)
+                                        dialog.dismiss()
+                                    }
                                 }
                             }
                         }
                     }
-                }
-            )
+                )
+            }
         }
 
         binding.topAppBar.setOnMenuItemClickListener { menuItem ->
@@ -161,10 +241,49 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
-    private fun properNumber(input: String): Boolean {
-        return input.isNotBlank() &&
-                input.contains(Regex("^\\d+$")) &&
-                input.toIntOrNull()?.let { it > 0 } ?: false
+    private fun animateCrossFade(viewIn: View, viewOut: View) {
+        viewIn.apply {
+            alpha = 0f
+            visibility = View.VISIBLE
+            animate()
+                .alpha(1f)
+                .setDuration((250).toLong())
+                .setListener(null)
+        }
+
+        viewOut.animate()
+            .alpha(0f)
+            .setDuration((250).toLong())
+            .setListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationStart(animation: Animator) {
+                    super.onAnimationStart(animation)
+                    viewOut.visibility = View.INVISIBLE
+                }
+
+                override fun onAnimationEnd(animation: Animator) {
+                    super.onAnimationEnd(animation)
+                    viewOut.visibility = View.INVISIBLE
+                }
+            })
+    }
+
+    private fun showUnauthorizedAccessError() {
+        ErrorPopupDialog.showError(
+            context = this,
+            title = "Aksi Tidak Diizinkan",
+            message = "Hanya Owner yang dapat melakukan aksi ini.",
+            buttonText = "Tutup"
+        )
+    }
+
+    private fun showNetworkError(onButtonClick: () -> Unit) {
+        ErrorPopupDialog.showError(
+            context = this,
+            title = "Kesalahan Jaringan",
+            message = "Silahkan coba lagi atau hubungi administrator jika berkelanjutan.",
+            buttonText = "Coba Lagi",
+            onButtonClick = onButtonClick
+        )
     }
 
     private fun showToast(message: String) {

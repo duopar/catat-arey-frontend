@@ -23,10 +23,17 @@ class HomeViewModel @Inject constructor(
     private val datastoreManager: DatastoreManager,
     private val networkRepository: NetworkRepository
 ) : ViewModel() {
+
+    /*
+        Use continuous data container for search feature
+     */
     private val _allProducts =
         MutableStateFlow<HomeUiState<List<ProductsDataResponse>>>(HomeUiState.Loading)
     val allProducts: StateFlow<HomeUiState<List<ProductsDataResponse>>> = _allProducts.asStateFlow()
 
+    /*
+        Used when activity startup and retries
+     */
     fun getCurrentUserData(): LiveData<HomeUiState<UserDataResponse>> = liveData {
         emit(HomeUiState.Loading)
 
@@ -36,19 +43,23 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun retrieveAllProducts() {
+    /*
+        Used when activity startup and retries, also search feature
+     */
+    fun retrieveAllProducts(name: String?) {
+        _allProducts.value = HomeUiState.Loading
+
         viewModelScope.launch {
-            val resp = networkRepository.getAllProduct()
-
-            _allProducts.value = HomeUiState.Loading
-
-            when (resp) {
+            when (val resp = networkRepository.getAllProduct(name)) {
                 is ResponseResult.Error -> _allProducts.value = HomeUiState.Error(resp.message)
                 is ResponseResult.Success -> _allProducts.value = HomeUiState.Success(resp.data)
             }
         }
     }
 
+    /*
+        Used when user wants to add a new product via form dialog
+     */
     fun addNewProduct(
         name: String,
         category: String,
