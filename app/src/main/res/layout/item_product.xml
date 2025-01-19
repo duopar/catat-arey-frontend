@@ -6,6 +6,7 @@
     android:layout_height="wrap_content"
     android:layout_marginBottom="18dp"
     android:background="@drawable/rounded_corner_stroke_white_8"
+    android:foreground="?attr/selectableItemBackground"
     android:paddingHorizontal="28dp"
     android:paddingVertical="20dp">
 
@@ -32,6 +33,7 @@
         android:id="@+id/tv_product_quantity"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:gravity="left"
         android:text="@string/pcs"
         android:textSize="14sp"
         android:textStyle="bold"
