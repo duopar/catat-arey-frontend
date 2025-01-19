@@ -58,7 +58,6 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
-
             <TextView
                 android:id="@+id/tv_product_out"
                 android:layout_width="wrap_content"
@@ -116,44 +115,6 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <!--    Blue Box-->
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/cl_product_total"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:background="@drawable/rounded_corner_8"
-            android:backgroundTint="@color/boxColor3"
-            android:padding="8dp"
-            app:layout_constraintEnd_toEndOf="@+id/cl_product_out"
-            app:layout_constraintStart_toStartOf="@+id/cl_product_out"
-            app:layout_constraintTop_toBottomOf="@+id/cl_product_out">
-
-            <TextView
-                android:id="@+id/tv_sum_total"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/number"
-                android:textColor="@color/white"
-                android:textStyle="bold"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-
-
-            <TextView
-                android:id="@+id/tv_product_total"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="@string/total_produk_tersedia"
-                android:textColor="@color/white"
-                app:layout_constraintStart_toStartOf="@+id/tv_sum_total"
-                app:layout_constraintTop_toBottomOf="@+id/tv_sum_total" />
-
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-
         <!--    Green Box-->
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/cl_add_product"
@@ -164,7 +125,7 @@
             android:backgroundTint="@color/boxColor4"
             android:padding="8dp"
             app:layout_constraintEnd_toEndOf="@+id/cl_product_in"
-            app:layout_constraintStart_toStartOf="@+id/cl_product_in"
+            app:layout_constraintStart_toStartOf="@id/cl_product_out"
             app:layout_constraintTop_toBottomOf="@+id/cl_product_out">
 
             <ImageView
@@ -197,12 +158,12 @@
             android:textSize="18sp"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/cl_product_total" />
+            app:layout_constraintTop_toBottomOf="@+id/cl_add_product" />
 
         <EditText
             android:id="@+id/ed_search_product"
             android:layout_width="0dp"
-            android:layout_height="32dp"
+            android:layout_height="28dp"
             android:layout_marginTop="-4dp"
             android:background="@drawable/rounded_corner_stroke_8"
             android:drawableStart="@drawable/ic_search_8"
@@ -210,9 +171,11 @@
             android:paddingStart="8dp"
             android:textColor="@color/searchText"
             android:textSize="14sp"
+            android:layout_marginStart="32dp"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/cl_product_total"
-            app:layout_constraintTop_toTopOf="@+id/tv_product_list" />
+            app:layout_constraintStart_toEndOf="@+id/tv_product_list"
+            app:layout_constraintTop_toTopOf="@+id/tv_product_list"
+            app:layout_constraintBottom_toBottomOf="@id/tv_product_list"/>
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv_product_list"
