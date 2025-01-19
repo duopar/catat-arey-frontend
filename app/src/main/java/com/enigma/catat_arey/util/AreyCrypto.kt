@@ -34,7 +34,7 @@ object AreyCrypto {
                 .setRandomizedEncryptionRequired(true)
                 .setUserAuthenticationRequired(true)
                 .setUserAuthenticationParameters(
-                    3600,
+                    86400,
                     KeyProperties.AUTH_BIOMETRIC_STRONG or KeyProperties.AUTH_DEVICE_CREDENTIAL
                 )
                 .setInvalidatedByBiometricEnrollment(false)
