@@ -16,9 +16,9 @@
     <string name="total_produk_tersedia">Total Produk Tersedia</string>
     <string name="total_produk_masuk_hari_ini">Total Produk Masuk Hari ini</string>
     <string name="catat_perubahan">Catat Perubahan</string>
-    <string name="prediksi_produk_dalam_7_hari">Prediksi {Nama Produk} dalam 7 hari</string>
-    <string name="total_produk_masuk">Total Produk Masuk</string>
-    <string name="total_produk_keluar">Total Produk Keluar</string>
+    <string name="prediksi_produk_dalam_7_hari">Prediksi untuk 7 hari</string>
+    <string name="total_produk_masuk">Total Produk Masuk Hari Ini</string>
+    <string name="total_produk_keluar">Total Produk Keluar Hari Ini</string>
     <string name="tambah_produk">Tambah Produk</string>
     <string name="list_produk">List Produk</string>
     <string name="cari_produk">Cari Produk</string>
