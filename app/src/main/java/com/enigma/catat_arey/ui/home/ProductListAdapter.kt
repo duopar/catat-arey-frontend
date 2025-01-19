@@ -5,10 +5,11 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.enigma.catat_arey.data.network.ProductsDataResponse
 import com.enigma.catat_arey.databinding.ItemProductBinding
-import com.enigma.catat_arey.util.ProductUtil.toFormatterCurrency
+import com.enigma.catat_arey.util.GeneralUtil.toFormatterCurrency
 
 class ProductListAdapter(
-    private val onClick: (ProductsDataResponse) -> Unit
+    private val onClick: (ProductsDataResponse) -> Unit,
+    private val onLongPress: (ProductsDataResponse) -> Unit
 ) : RecyclerView.Adapter<ProductListAdapter.ProductListViewHolder>() {
 
     private var products = ArrayList<ProductsDataResponse>()
@@ -19,7 +20,15 @@ class ProductListAdapter(
             with(binding) {
                 tvProductPrice.text = "Rp. " + product.price.toFormatterCurrency()
                 tvProductName.text = product.name
-                tvProductQuantity.text = "Backend NotImpl"
+
+                val stock = product.stockLevel
+                var stockStr = stock.toString()
+
+                if (stock > 100) {
+                    stockStr = "100+"
+                }
+
+                tvProductQuantity.text = "$stockStr Pcs"
             }
         }
     }
@@ -39,6 +48,10 @@ class ProductListAdapter(
         holder.bind(products[position])
         holder.binding.root.setOnClickListener {
             onClick.invoke(products[position])
+        }
+        holder.binding.root.setOnLongClickListener {
+            onLongPress.invoke(products[position])
+            true
         }
     }
 
