@@ -52,4 +52,7 @@ interface AreyApiService {
 
     @GET("/api/v1/forecasts")
     suspend fun getSaleForecastById(@Query("productId") productId: String): Response<ApiResponse<List<ProductSaleForecastResponse>>>
+
+    @GET("/api/v1/inventory-logs")
+    suspend fun getInventoryLogs(): Response<ApiResponse<List<InventoryLogResponse>>>
 }

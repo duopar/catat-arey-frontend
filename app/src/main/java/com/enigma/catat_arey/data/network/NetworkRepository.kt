@@ -13,6 +13,10 @@ class NetworkRepository @Inject constructor(
     @DefaultApi private val defaultApiService: AreyApiService,
     @AuthenticatedApi private val authenticatedApiService: AreyApiService
 ) {
+    fun getToken(): String? {
+        return tokenProvider.getToken()
+    }
+
     fun updateToken(token: String) {
         tokenProvider.setToken(token)
     }
@@ -102,6 +106,12 @@ class NetworkRepository @Inject constructor(
     suspend fun getProductSaleForecast(productId: String): ResponseResult<List<ProductSaleForecastResponse>?> {
         return ApiCallWrapper.safeApiCall {
             authenticatedApiService.getSaleForecastById(productId)
+        }
+    }
+
+    suspend fun getInventoryLogs(): ResponseResult<List<InventoryLogResponse>?> {
+        return ApiCallWrapper.safeApiCall {
+            authenticatedApiService.getInventoryLogs()
         }
     }
 }

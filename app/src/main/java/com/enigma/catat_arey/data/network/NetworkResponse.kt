@@ -26,10 +26,10 @@ data class ApiResponse<T>(
 
 data class EpochTimeResponse(
     @SerializedName("_seconds")
-    var secondsInEpoch: Int,
+    var secondsInEpoch: Long,
 
     @SerializedName("_nanoseconds")
-    var nanoSeconds: Int
+    var nanoSeconds: Long
 )
 
 //
@@ -165,4 +165,21 @@ data class PredictedSales(
 
     @SerializedName("sun")
     val sunday: Int
+)
+
+data class InventoryLogResponse(
+    @SerializedName("inventoryLogId")
+    val inventoryLogId: String,
+
+    @SerializedName("productId")
+    val productId: String,
+
+    @SerializedName("changeType")
+    val changeType: String,
+
+    @SerializedName("createdAt")
+    val createdAt: EpochTimeResponse,
+
+    @SerializedName("stockChange")
+    val stockChange: Int
 )
