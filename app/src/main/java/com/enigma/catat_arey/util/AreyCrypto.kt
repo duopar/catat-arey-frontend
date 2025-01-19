@@ -1,5 +1,6 @@
 package com.enigma.catat_arey.util
 
+import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import java.security.KeyStore
@@ -21,18 +22,37 @@ object AreyCrypto {
 
     private fun getAesGCMCipher(): Cipher = Cipher.getInstance("AES/GCM/NoPadding")
 
-    private fun getDefaultAESBiometricKeyGenSpec(keyAlias: String): KeyGenParameterSpec =
-        KeyGenParameterSpec.Builder(
-            keyAlias,
-            KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
-        )
-            .setKeySize(AES_KEY_SIZE_BITS)
-            .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
-            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
-            .setRandomizedEncryptionRequired(true)
-            .setUserAuthenticationRequired(true)
-            .setInvalidatedByBiometricEnrollment(false)
-            .build()
+    private fun getDefaultAESBiometricKeyGenSpec(keyAlias: String): KeyGenParameterSpec {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            KeyGenParameterSpec.Builder(
+                keyAlias,
+                KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
+            )
+                .setKeySize(AES_KEY_SIZE_BITS)
+                .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+                .setRandomizedEncryptionRequired(true)
+                .setUserAuthenticationRequired(true)
+                .setUserAuthenticationParameters(
+                    3600,
+                    KeyProperties.AUTH_BIOMETRIC_STRONG or KeyProperties.AUTH_DEVICE_CREDENTIAL
+                )
+                .setInvalidatedByBiometricEnrollment(false)
+                .build()
+        } else {
+            KeyGenParameterSpec.Builder(
+                keyAlias,
+                KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
+            )
+                .setKeySize(AES_KEY_SIZE_BITS)
+                .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+                .setRandomizedEncryptionRequired(true)
+                .setUserAuthenticationRequired(true)
+                .setInvalidatedByBiometricEnrollment(false)
+                .build()
+        }
+    }
 
     private fun getDefaultAESKeyGenSpec(keyAlias: String): KeyGenParameterSpec =
         KeyGenParameterSpec.Builder(
