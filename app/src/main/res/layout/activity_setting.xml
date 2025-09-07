@@ -5,8 +5,8 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingHorizontal="8dp"
     android:background="@color/white"
+    android:paddingHorizontal="8dp"
     tools:context=".ui.setting.SettingActivity">
 
 
@@ -22,9 +22,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/white"
+            app:navigationIcon="@drawable/ic_chevron_left_24"
             app:title="Setting"
             app:titleTextAppearance="@style/ToolbarTitleStyle"
-            app:navigationIcon="@drawable/ic_chevron_left_24"
             app:titleTextColor="@color/black" />
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -36,53 +36,51 @@
         app:layout_constraintTop_toBottomOf="@+id/appBarLayout">
 
         <TextView
-            android:id="@+id/tv_username"
+            android:id="@+id/tv_greetings"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/username"
-            android:textStyle="bold"
-            android:textSize="16sp"
             android:layout_marginTop="64dp"
+            android:text=""
+            android:textSize="24dp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-
-
-        <TextView
-            android:id="@+id/ed_title"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@drawable/rounded_corner_stroke_white_4"
-            android:padding="8dp"
-            android:textSize="14sp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tv_username"
-            app:layout_constraintWidth_percent="0.75"/>
+        <com.google.android.material.progressindicator.CircularProgressIndicator
+            android:id="@+id/loading_indicator"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:visibility="invisible"
+            app:layout_constraintBottom_toBottomOf="@id/tv_greetings"
+            app:layout_constraintEnd_toEndOf="@id/tv_greetings"
+            app:layout_constraintStart_toStartOf="@id/tv_greetings"
+            app:layout_constraintTop_toTopOf="@id/tv_greetings" />
 
         <Button
             android:id="@+id/btn_change_pw"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="32dp"
-            android:backgroundTint="#E7CC00"
+            android:layout_marginTop="72dp"
+            android:backgroundTint="@color/myLightBlue"
             android:gravity="center"
             android:text="@string/ubah_password"
-            android:textColor="@color/black"
+            android:textColor="#F5F5F5"
             android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/ed_title" />
+            app:layout_constraintTop_toTopOf="@id/tv_greetings" />
 
         <Button
             android:id="@+id/btn_logout"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_margin="16dp"
-            android:backgroundTint="#F42660"
+            android:backgroundTint="@color/myCalmRed"
             android:gravity="center"
             android:text="@string/keluar"
-            android:textColor="@color/white"
+            android:textColor="#F5F5F5"
             android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"

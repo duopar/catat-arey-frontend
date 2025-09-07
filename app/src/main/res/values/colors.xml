@@ -7,4 +7,7 @@
     <color name="boxColor3">#50AAFE</color>
     <color name="boxColor4">#54C392</color>
     <color name="searchText">#7C7C7C</color>
+    <color name="greyedOut">#A9A9A9</color>
+    <color name="myLightBlue">#50AAFE</color>
+    <color name="myCalmRed">#F44336</color>
 </resources>

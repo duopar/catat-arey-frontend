@@ -18,11 +18,28 @@
         android:id="@+id/ed_product_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:inputType="text"
         android:background="@drawable/rounded_corner_stroke_white_4"
+        android:inputType="text"
         android:padding="8dp"
         android:textSize="12sp" />
 
+    <TextView
+        android:id="@+id/tv_product_category"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Kategory Produk"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+    <EditText
+        android:id="@+id/ed_product_category"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/rounded_corner_stroke_white_4"
+        android:inputType="text"
+        android:padding="8dp"
+        android:textSize="12sp" />
 
     <TextView
         android:id="@+id/tv_product_price"
@@ -37,8 +54,8 @@
         android:id="@+id/ed_product_price"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:inputType="text"
         android:background="@drawable/rounded_corner_stroke_white_4"
+        android:inputType="number"
         android:padding="8dp"
         android:textSize="12sp" />
 
@@ -56,9 +73,26 @@
         android:id="@+id/ed_product_stock"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:inputType="text"
         android:background="@drawable/rounded_corner_stroke_white_4"
+        android:inputType="number"
         android:padding="8dp"
         android:textSize="12sp" />
 
+    <TextView
+        android:id="@+id/tv_product_restock_threshold"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Batas Stok Ulang"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+    <EditText
+        android:id="@+id/ed_product_restock_threshold"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/rounded_corner_stroke_white_4"
+        android:inputType="number"
+        android:padding="8dp"
+        android:textSize="12sp" />
 </LinearLayout>

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <style name="MaterialAlertDialog.App" parent="MaterialAlertDialog.Material3">
         <item name="shapeAppearance">@style/ShapeAppearance.App.MediumComponent</item>
         <item name="shapeAppearanceOverlay">@null</item>
@@ -9,4 +10,9 @@
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">32dp</item>
     </style>
+
+    <style name="Widget.App.Button" parent="Widget.Material3.Button.TextButton.Dialog">
+        <item name="android:textColor">@color/black</item>
+    </style>
+
 </resources>

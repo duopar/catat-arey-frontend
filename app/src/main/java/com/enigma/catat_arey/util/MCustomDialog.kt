@@ -13,9 +13,11 @@ fun showCustomDialog(
     layoutId: Int,
     positiveButtonText: String = "Simpan",
     negativeButtonText: String = "Batal",
-    onPositiveAction: (dialogView: View, dialog: MaterialAlertDialogBuilder) -> Unit
+    onPositiveAction: (dialogView: View, dialog: androidx.appcompat.app.AlertDialog) -> Unit,
+    onDialogViewCreated: ((View) -> Unit)? = null
 ) {
     val dialogView = LayoutInflater.from(context).inflate(layoutId, null)
+    onDialogViewCreated?.invoke(dialogView)
 
     val dialogLayoutBuilder = MaterialAlertDialogBuilder(context, R.style.CustomAlertDialogTheme)
         .setView(dialogView)
@@ -29,6 +31,6 @@ fun showCustomDialog(
 
     // prevent auto-dismiss
     dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-        onPositiveAction(dialogView, dialogLayoutBuilder)
+        onPositiveAction(dialogView, dialog)
     }
 }

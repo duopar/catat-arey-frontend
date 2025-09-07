@@ -1,6 +1,8 @@
-package com.enigma.catat_arey.data.preferences
+package com.enigma.catat_arey.data.di
 
 import android.content.Context
+import com.enigma.catat_arey.data.preferences.DatastoreManager
+import com.enigma.catat_arey.data.preferences.UserPreferences
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

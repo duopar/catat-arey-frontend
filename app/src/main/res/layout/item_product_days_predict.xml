@@ -1,26 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:layout_marginHorizontal="12dp"
     android:layout_marginBottom="18dp"
-    android:background="@drawable/rounded_corner_stroke_white_8"
-    >
+    android:background="@drawable/rounded_corner_stroke_white_8">
 
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/restock_flag_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        android:background="@drawable/rounded_corner_banner"
         android:visibility="visible"
-        android:background="@drawable/rounded_corner_banner">
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/estimasi_restock"
             android:paddingHorizontal="16dp"
+            android:text="@string/estimasi_restock"
             android:textColor="@color/white"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -33,12 +33,11 @@
         android:layout_height="wrap_content"
         android:paddingHorizontal="28dp"
         android:paddingVertical="20dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
+        app:layout_constraintStart_toStartOf="@+id/restock_flag_layout"
+        app:layout_constraintTop_toBottomOf="@+id/restock_flag_layout">
 
         <TextView
-            android:id="@+id/textView"
+            android:id="@+id/tv_day"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/hari"
@@ -48,56 +47,36 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
-            android:id="@+id/textView3"
+            android:id="@+id/tv_date"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/date"
             android:textSize="12sp"
-            app:layout_constraintStart_toStartOf="@+id/textView"
-            app:layout_constraintTop_toBottomOf="@+id/textView" />
+            app:layout_constraintStart_toStartOf="@+id/tv_day"
+            app:layout_constraintTop_toBottomOf="@+id/tv_day" />
 
         <TextView
-            android:id="@+id/textView4"
+            android:id="@+id/tv_stock_out_str"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/keluar"
+            android:layout_marginEnd="32dp"
+            android:text="@string/predict_sale"
             android:textSize="14sp"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
+            android:id="@+id/tv_stock_out_int"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/number"
             android:textSize="14sp"
             android:textStyle="bold"
-            app:layout_constraintStart_toStartOf="@+id/textView4"
-            app:layout_constraintTop_toBottomOf="@+id/textView4" />
-
-        <TextView
-            android:id="@+id/textView5"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="72dp"
-            android:text="@string/stok"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toStartOf="@+id/textView4"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/number"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="@+id/textView5"
-            app:layout_constraintTop_toBottomOf="@+id/textView5" />
+            app:layout_constraintStart_toStartOf="@+id/tv_stock_out_str"
+            app:layout_constraintTop_toBottomOf="@+id/tv_stock_out_str" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
-
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
