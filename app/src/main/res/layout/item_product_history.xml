@@ -4,6 +4,7 @@
     android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:layout_marginHorizontal="12dp"
     android:layout_marginBottom="18dp"
     android:background="@drawable/rounded_corner_stroke_white_8"
     android:foreground="?attr/selectableItemBackground"
@@ -11,25 +12,25 @@
     android:paddingVertical="20dp">
 
     <TextView
-        android:id="@+id/tv_product_name"
+        android:id="@+id/tv_date"
         android:layout_width="212dp"
         android:layout_height="wrap_content"
         android:ellipsize="end"
         android:lines="1"
-        android:text="@string/nama_produk"
+        android:text="log_date"
         android:textSize="16sp"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/tv_product_price"
+        android:id="@+id/tv_action_type"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/harga_produk"
+        android:text="stock_in_out"
         android:textSize="12sp"
-        app:layout_constraintStart_toStartOf="@+id/tv_product_name"
-        app:layout_constraintTop_toBottomOf="@+id/tv_product_name" />
+        app:layout_constraintStart_toStartOf="@+id/tv_date"
+        app:layout_constraintTop_toBottomOf="@+id/tv_date" />
 
     <TextView
         android:id="@+id/tv_product_quantity"

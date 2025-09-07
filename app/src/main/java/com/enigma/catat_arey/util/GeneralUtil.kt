@@ -1,5 +1,6 @@
 package com.enigma.catat_arey.util
 
+import android.util.Log
 import com.enigma.catat_arey.data.network.InventoryLogResponse
 import com.enigma.catat_arey.data.network.ProductSaleForecastResponse
 import com.enigma.catat_arey.ui.product_detail.ProductForecast
@@ -8,6 +9,7 @@ import java.text.NumberFormat
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
@@ -105,6 +107,19 @@ object GeneralUtil {
         return DailySum(stockIn, stockOut)
     }
 
+    fun epochLongToFormattedDate(epochSeconds: Long, locale: Locale = Locale.getDefault()): String {
+        val instant = Instant.ofEpochSecond(epochSeconds)
+        val localDateTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault())
+
+        val dateFormatter = DateTimeFormatter.ofPattern("d MMM yyyy", locale)
+        val timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss") // 24-hour format
+
+        val dateString = localDateTime.format(dateFormatter)
+        val timeString = localDateTime.format(timeFormatter)
+
+        return "$dateString ($timeString)"
+    }
+
     fun createForecastList(data: ProductSaleForecastResponse): List<ProductForecast> {
         if (data.predictedRestockDay == null) return listOf()
 
@@ -152,6 +167,10 @@ object GeneralUtil {
         }
 
         return forecasts
+    }
+
+    fun getCurrentEpoch(): Long {
+        return System.currentTimeMillis() / 1000
     }
 
     data class UserToken(

@@ -11,6 +11,7 @@ import com.enigma.catat_arey.data.network.ProductsDataResponse
 import com.enigma.catat_arey.data.network.ResponseResult
 import com.enigma.catat_arey.data.network.UserDataResponse
 import com.enigma.catat_arey.data.preferences.DatastoreManager
+import com.enigma.catat_arey.util.GeneralUtil
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -36,14 +37,15 @@ class HomeViewModel @Inject constructor(
         Direct user to refresh the app (token) for prolonged usage
      */
     suspend fun shouldRefreshApp(): Boolean {
+        val currentTime = GeneralUtil.getCurrentEpoch()
         val expiry = datastoreManager.currentUserTokenExpiry.first()
 
-        // if access token lifetime is less than 1 hour
-        if ((expiry - System.currentTimeMillis() / 1000) < 3600) {
-            return true
-        }
+        // Backend sanity test, ensure token validity regardless actual expiry
+        val resp = networkRepository.getAllProduct(null)
+        val isTokenInvalidated =
+            resp is ResponseResult.Error && resp.message.lowercase().contains("token")
 
-        return false
+        return (expiry - currentTime) < 3600 || isTokenInvalidated
     }
 
     /*
@@ -52,7 +54,7 @@ class HomeViewModel @Inject constructor(
     fun getInventoryLogs(): LiveData<HomeUiState<List<InventoryLogResponse>>> = liveData {
         emit(HomeUiState.Loading)
 
-        when (val resp = networkRepository.getInventoryLogs()) {
+        when (val resp = networkRepository.getInventoryLogs(null)) {
             is ResponseResult.Error -> emit(HomeUiState.Error(resp.message))
             is ResponseResult.Success -> emit(HomeUiState.Success(resp.data))
         }

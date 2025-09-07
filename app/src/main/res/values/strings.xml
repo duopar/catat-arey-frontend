@@ -42,4 +42,6 @@
     <string name="date">dd/mm/yyy</string>
     <string name="stok">Stok</string>
     <string name="setting_greeting">"Halo, %1$s!"</string>
+    <string name="sales_prediction">Prediksi</string>
+    <string name="sales_history">Riwayat</string>
 </resources>

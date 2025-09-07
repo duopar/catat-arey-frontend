@@ -109,9 +109,9 @@ class NetworkRepository @Inject constructor(
         }
     }
 
-    suspend fun getInventoryLogs(): ResponseResult<List<InventoryLogResponse>?> {
+    suspend fun getInventoryLogs(productId: String?): ResponseResult<List<InventoryLogResponse>?> {
         return ApiCallWrapper.safeApiCall {
-            authenticatedApiService.getInventoryLogs()
+            authenticatedApiService.getInventoryLogs(productId)
         }
     }
 
@@ -126,7 +126,7 @@ class NetworkRepository @Inject constructor(
         return ApiCallWrapper.safeApiCall {
             authenticatedApiService.updateProduct(
                 productId,
-                UpdateProductRequest(name, category, price, stock, restock)
+                UpdateProductRequest(category, price, stock, restock)
             )
         }
     }

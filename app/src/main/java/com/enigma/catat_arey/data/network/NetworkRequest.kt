@@ -45,9 +45,6 @@ data class AddProductRequest(
 )
 
 data class UpdateProductRequest(
-    @SerializedName("name")
-    val name: String?,
-
     @SerializedName("category")
     val category: String?,
 

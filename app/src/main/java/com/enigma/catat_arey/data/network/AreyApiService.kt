@@ -53,5 +53,5 @@ interface AreyApiService {
     suspend fun getSaleForecastById(@Query("productId") productId: String): Response<ApiResponse<List<ProductSaleForecastResponse>>>
 
     @GET("/api/v1/inventory-logs")
-    suspend fun getInventoryLogs(): Response<ApiResponse<List<InventoryLogResponse>>>
+    suspend fun getInventoryLogs(@Query("productId") productId: String?): Response<ApiResponse<List<InventoryLogResponse>>>
 }

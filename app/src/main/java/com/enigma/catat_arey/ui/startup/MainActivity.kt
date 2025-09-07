@@ -12,6 +12,7 @@ import androidx.biometric.BiometricPrompt
 import androidx.biometric.BiometricPrompt.PromptInfo
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.lifecycleScope
 import com.enigma.catat_arey.R
 import com.enigma.catat_arey.databinding.ActivityMainBinding
 import com.enigma.catat_arey.ui.home.HomeActivity
@@ -25,6 +26,9 @@ import com.enigma.catat_arey.util.GCMEnvelope
 import com.enigma.catat_arey.util.GeneralUtil
 import com.enigma.catat_arey.util.LoadingDialog
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import javax.crypto.Cipher
 
@@ -48,6 +52,8 @@ class MainActivity : AppCompatActivity() {
     // Checking
     private var deviceSupportBiometric = false
     private var canAutoLogin = true
+
+    private var firstTime = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
@@ -243,11 +249,36 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
 
-        runBlocking {
-            if (canAutoLogin && !viewModel.mustRelogin()) {
-                promptBiometricLogin()
+        if (!firstTime) {
+            lifecycleScope.launch {
+                viewModel.canBiometricLogin().flowOn(Dispatchers.Default).collect {
+                    when (it) {
+                        is MainUiState.Error -> {
+                            setGlobalLoading(false)
+
+                            val msg = it.message
+
+                            if (msg.lowercase().contains("network error")) {
+                                showNetworkError { }
+                            } else {
+                                showToast("Error: ${it.message}")
+                            }
+                        }
+
+                        MainUiState.Loading -> setGlobalLoading(true)
+                        is MainUiState.Success -> {
+                            canAutoLogin = it.data!!
+                            setGlobalLoading(false)
+                            if (!viewModel.mustRelogin()) {
+                                promptBiometricLogin()
+                            }
+                        }
+                    }
+                }
             }
         }
+
+        firstTime = false
     }
 
     private fun setupListener() {
@@ -408,6 +439,16 @@ class MainActivity : AppCompatActivity() {
             title = "Sesi Berakhir",
             message = "Silahkan lakukan login kembali dengan email dan password anda.",
             buttonText = "Tutup"
+        )
+    }
+
+    private fun showNetworkError(onButtonClick: () -> Unit) {
+        ErrorPopupDialog.showError(
+            context = this,
+            title = "Kesalahan Jaringan",
+            message = "Silahkan coba lagi atau hubungi administrator jika berkelanjutan.",
+            buttonText = "Coba Lagi",
+            onButtonClick = onButtonClick
         )
     }
 

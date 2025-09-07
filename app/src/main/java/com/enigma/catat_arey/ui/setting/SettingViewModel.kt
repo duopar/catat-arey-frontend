@@ -8,6 +8,7 @@ import com.enigma.catat_arey.data.network.ResponseResult
 import com.enigma.catat_arey.data.network.UserDataResponse
 import com.enigma.catat_arey.data.preferences.DatastoreManager
 import com.enigma.catat_arey.ui.home.HomeUiState
+import com.enigma.catat_arey.util.GeneralUtil
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
@@ -22,14 +23,15 @@ class SettingViewModel @Inject constructor(
         Direct user to refresh the app (token) for prolonged usage
      */
     suspend fun shouldRefreshApp(): Boolean {
+        val currentTime = GeneralUtil.getCurrentEpoch()
         val expiry = datastoreManager.currentUserTokenExpiry.first()
 
-        // if access token lifetime is less than 1 hour
-        if ((expiry - System.currentTimeMillis() / 1000) < 3600) {
-            return true
-        }
+        // Backend sanity test, ensure token validity regardless actual expiry
+        val resp = networkRepository.getAllProduct(null)
+        val isTokenInvalidated =
+            resp is ResponseResult.Error && resp.message.lowercase().contains("token")
 
-        return false
+        return (expiry - currentTime) < 3600 || isTokenInvalidated
     }
 
     /*

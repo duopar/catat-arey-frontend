@@ -2,15 +2,15 @@ package com.enigma.catat_arey.ui.product_detail
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.View
 import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.TooltipCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.recyclerview.widget.LinearLayoutManager
 import com.enigma.catat_arey.R
 import com.enigma.catat_arey.data.network.ProductDataResponse
 import com.enigma.catat_arey.databinding.ActivityProductDetailBinding
@@ -19,11 +19,11 @@ import com.enigma.catat_arey.ui.startup.MainActivity
 import com.enigma.catat_arey.util.AreyUserRole
 import com.enigma.catat_arey.util.ErrorPopupDialog
 import com.enigma.catat_arey.util.GeneralUtil
-import com.enigma.catat_arey.util.GeneralUtil.createForecastList
 import com.enigma.catat_arey.util.GeneralUtil.isProperPositiveNumber
 import com.enigma.catat_arey.util.LoadingDialog
 import com.enigma.catat_arey.util.showCustomDialog
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.tabs.TabLayoutMediator
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.runBlocking
 
@@ -35,9 +35,8 @@ class ProductDetailActivity : AppCompatActivity() {
     private lateinit var productId: String
     private lateinit var currentProduct: ProductDataResponse
 
-    private lateinit var productForecastAdapter: ProductForecastAdapter
-
     private lateinit var userRole: AreyUserRole
+    private lateinit var tabLayoutMediator: TabLayoutMediator
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,8 +65,8 @@ class ProductDetailActivity : AppCompatActivity() {
 
         setupUserData()
         setupUI()
-        setupRecyclerView()
         setupListener()
+        setupFragment()
     }
 
     override fun onResume() {
@@ -79,7 +78,23 @@ class ProductDetailActivity : AppCompatActivity() {
             }
         }
 
-        displayForecast()
+        viewModel.getForecast(productId)
+        viewModel.getInventoryLogs(productId)
+    }
+
+    private fun setupFragment() {
+        val adapter = ProductDetailSectionsAdapter(this)
+        binding.vpRoot.adapter = adapter
+
+        adapter.setProductId(productId)
+
+        tabLayoutMediator =
+            TabLayoutMediator(binding.tabsProductDetail, binding.vpRoot) { tab, pos ->
+                tab.text = resources.getString(TAB_TITLES[pos])
+                TooltipCompat.setTooltipText(tab.view, null)
+            }
+
+        tabLayoutMediator.attach()
     }
 
     private fun setupUserData() {
@@ -124,57 +139,9 @@ class ProductDetailActivity : AppCompatActivity() {
                 }
             }
         }
-    }
 
-    private fun setupRecyclerView() {
-        productForecastAdapter = ProductForecastAdapter()
-        binding.rvForecast.layoutManager = LinearLayoutManager(this)
-        binding.rvForecast.adapter = productForecastAdapter
-    }
-
-    private fun displayForecast() {
-        setupRecyclerView()
-
-        viewModel.getForecast(productId).observe(this) {
-            when (it) {
-                is ProductDetailUiState.Error -> {
-                    binding.wholeLoadingIndicator.visibility = View.INVISIBLE
-
-                    val msg = it.message
-
-                    if (msg.lowercase().contains("network error")) {
-                        showNetworkError {
-                            displayForecast()
-                        }
-                    } else {
-                        showToast("Error: ${it.message}")
-                    }
-                }
-
-                ProductDetailUiState.Loading -> {
-                    binding.wholeLoadingIndicator.visibility = View.VISIBLE
-                }
-
-                is ProductDetailUiState.Success -> {
-                    binding.wholeLoadingIndicator.visibility = View.INVISIBLE
-
-                    if (it.data != null) {
-                        val data = it.data[0]
-                        val forecasts = createForecastList(data)
-
-                        if (forecasts.isEmpty()) {
-                            binding.tvRvMessage.visibility = View.VISIBLE
-                            binding.tvRvMessage.text = "Data Belum Cukup untuk Fitur Prediksi."
-                        } else {
-                            binding.tvRvMessage.visibility = View.GONE
-                        }
-
-                        productForecastAdapter.submitList(forecasts)
-                        productForecastAdapter.notifyDataSetChanged()
-                    }
-                }
-            }
-        }
+        viewModel.getForecast(productId)
+        viewModel.getInventoryLogs(productId)
     }
 
     private fun setupListener() {
@@ -291,11 +258,21 @@ class ProductDetailActivity : AppCompatActivity() {
                                 }
                             },
                             onDialogViewCreated = { dialogView ->
-                                dialogView.findViewById<EditText>(R.id.ed_product_name)?.setText(currentProduct.name)
-                                dialogView.findViewById<EditText>(R.id.ed_product_category)?.setText(currentProduct.category)
-                                dialogView.findViewById<EditText>(R.id.ed_product_price)?.setText(currentProduct.price.toString())
-                                dialogView.findViewById<EditText>(R.id.ed_product_stock)?.setText(currentProduct.stockLevel.toString())
-                                dialogView.findViewById<EditText>(R.id.ed_product_restock_threshold)?.setText(currentProduct.restockThreshold.toString())
+                                dialogView.findViewById<EditText>(R.id.ed_product_name)
+                                    ?.setText(currentProduct.name)
+                                dialogView.findViewById<EditText>(R.id.ed_product_category)
+                                    ?.setText(currentProduct.category)
+                                dialogView.findViewById<EditText>(R.id.ed_product_price)
+                                    ?.setText(currentProduct.price.toString())
+                                dialogView.findViewById<EditText>(R.id.ed_product_stock)
+                                    ?.setText(currentProduct.stockLevel.toString())
+                                dialogView.findViewById<EditText>(R.id.ed_product_restock_threshold)
+                                    ?.setText(currentProduct.restockThreshold.toString())
+
+                                dialogView.findViewById<EditText>(R.id.ed_product_name).isEnabled =
+                                    false
+                                dialogView.findViewById<EditText>(R.id.ed_product_name).isClickable =
+                                    false
                             }
                         )
                     }
@@ -351,7 +328,6 @@ class ProductDetailActivity : AppCompatActivity() {
                                     setGlobalLoading(false)
                                     showToast("Entri produk berhasil.")
                                     setupUI()
-                                    displayForecast()
                                     dialog.dismiss()
                                 }
                             }
@@ -432,6 +408,12 @@ class ProductDetailActivity : AppCompatActivity() {
     }
 
     companion object {
+        @StringRes
+        private val TAB_TITLES = intArrayOf(
+            R.string.sales_prediction,
+            R.string.sales_history,
+        )
+
         val EXTRA_PRODUCT_ID = "productId"
     }
 }

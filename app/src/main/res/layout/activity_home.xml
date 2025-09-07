@@ -164,6 +164,7 @@
             android:id="@+id/ed_search_product"
             android:layout_width="0dp"
             android:layout_height="28dp"
+            android:layout_marginStart="32dp"
             android:layout_marginTop="-4dp"
             android:background="@drawable/rounded_corner_stroke_8"
             android:drawableStart="@drawable/ic_search_8"
@@ -171,11 +172,10 @@
             android:paddingStart="8dp"
             android:textColor="@color/searchText"
             android:textSize="14sp"
-            android:layout_marginStart="32dp"
+            app:layout_constraintBottom_toBottomOf="@id/tv_product_list"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/tv_product_list"
-            app:layout_constraintTop_toTopOf="@+id/tv_product_list"
-            app:layout_constraintBottom_toBottomOf="@id/tv_product_list"/>
+            app:layout_constraintTop_toTopOf="@+id/tv_product_list" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv_product_list"

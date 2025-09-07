@@ -3,7 +3,8 @@ package com.enigma.catat_arey.ui.product_detail
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.liveData
-import com.enigma.catat_arey.data.network.AddProductResponse
+import androidx.lifecycle.viewModelScope
+import com.enigma.catat_arey.data.network.InventoryLogResponse
 import com.enigma.catat_arey.data.network.NetworkRepository
 import com.enigma.catat_arey.data.network.ProductDataResponse
 import com.enigma.catat_arey.data.network.ProductLogEntryResponse
@@ -13,8 +14,13 @@ import com.enigma.catat_arey.data.network.UpdateProductResponse
 import com.enigma.catat_arey.data.network.UserDataResponse
 import com.enigma.catat_arey.data.preferences.DatastoreManager
 import com.enigma.catat_arey.ui.home.HomeUiState
+import com.enigma.catat_arey.util.GeneralUtil
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -23,18 +29,32 @@ class ProductDetailViewModel @Inject constructor(
     private val networkRepository: NetworkRepository
 ) : ViewModel() {
 
+    private val _productForecast =
+        MutableStateFlow<ProductDetailUiState<List<ProductSaleForecastResponse>>>(
+            ProductDetailUiState.Loading
+        )
+    val productForecast: StateFlow<ProductDetailUiState<List<ProductSaleForecastResponse>>> =
+        _productForecast.asStateFlow()
+
+    private val _productLog =
+        MutableStateFlow<ProductDetailUiState<List<InventoryLogResponse>>>(ProductDetailUiState.Loading)
+    val productLog: StateFlow<ProductDetailUiState<List<InventoryLogResponse>>> =
+        _productLog.asStateFlow()
+
+
     /*
         Direct user to refresh the app (token) for prolonged usage
      */
     suspend fun shouldRefreshApp(): Boolean {
+        val currentTime = GeneralUtil.getCurrentEpoch()
         val expiry = datastoreManager.currentUserTokenExpiry.first()
 
-        // if access token lifetime is less than 1 hour
-        if ((expiry - System.currentTimeMillis() / 1000) < 3600) {
-            return true
-        }
+        // Backend sanity test, ensure token validity regardless actual expiry
+        val resp = networkRepository.getAllProduct(null)
+        val isTokenInvalidated =
+            resp is ResponseResult.Error && resp.message.lowercase().contains("token")
 
-        return false
+        return (expiry - currentTime) < 3600 || isTokenInvalidated
     }
 
     /*
@@ -94,15 +114,36 @@ class ProductDetailViewModel @Inject constructor(
     /*
         Get product forecast at activity startup and retries
      */
-    fun getForecast(productId: String): LiveData<ProductDetailUiState<List<ProductSaleForecastResponse>>> =
-        liveData {
-            emit(ProductDetailUiState.Loading)
+    fun getForecast(productId: String) {
+        _productForecast.value = ProductDetailUiState.Loading
 
+        viewModelScope.launch {
             when (val resp = networkRepository.getProductSaleForecast(productId)) {
-                is ResponseResult.Error -> emit(ProductDetailUiState.Error(resp.message))
-                is ResponseResult.Success -> emit(ProductDetailUiState.Success(resp.data))
+                is ResponseResult.Error -> _productForecast.value =
+                    ProductDetailUiState.Error(resp.message)
+
+                is ResponseResult.Success -> _productForecast.value =
+                    ProductDetailUiState.Success(resp.data)
             }
         }
+    }
+
+    /*
+        Get product/inventory logs
+     */
+    fun getInventoryLogs(productId: String?) {
+        _productLog.value = ProductDetailUiState.Loading
+
+        viewModelScope.launch {
+            when (val resp = networkRepository.getInventoryLogs(productId)) {
+                is ResponseResult.Error -> _productLog.value =
+                    ProductDetailUiState.Error(resp.message)
+
+                is ResponseResult.Success -> _productLog.value =
+                    ProductDetailUiState.Success(resp.data)
+            }
+        }
+    }
 
     /*
        Used when user wants to update a selected product via form dialog
@@ -117,7 +158,14 @@ class ProductDetailViewModel @Inject constructor(
     ): LiveData<ProductDetailUiState<UpdateProductResponse>> = liveData {
         emit(ProductDetailUiState.Loading)
 
-        when (val resp = networkRepository.updateProduct(productId ,name, category, price.toInt(), stock.toInt(), restock.toInt())) {
+        when (val resp = networkRepository.updateProduct(
+            productId,
+            name,
+            category,
+            price.toInt(),
+            stock.toInt(),
+            restock.toInt()
+        )) {
             is ResponseResult.Error -> emit(ProductDetailUiState.Error(resp.message))
             is ResponseResult.Success -> emit(ProductDetailUiState.Success(resp.data))
         }

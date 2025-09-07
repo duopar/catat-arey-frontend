@@ -43,9 +43,12 @@ class MainViewModel @Inject constructor(
         If both access and refresh token are near expiry, direct user to re-login with credentials
      */
     suspend fun mustRelogin(): Boolean {
-        val epoch = (System.currentTimeMillis() / 1000) - 3600
+        val epoch = GeneralUtil.getCurrentEpoch() - 3600
 
-        return (datastoreManager.currentUserTokenExpiry.first() < epoch) && (datastoreManager.currentRefreshTokenExpiry.first() < epoch)
+        val isAccessTokenExpired = datastoreManager.currentUserTokenExpiry.first() < epoch
+        val isRefreshTokenExpired = datastoreManager.currentRefreshTokenExpiry.first() < epoch
+
+        return isAccessTokenExpired || isRefreshTokenExpired
     }
 
     /*
@@ -88,8 +91,14 @@ class MainViewModel @Inject constructor(
                 var accessToken = token.accessToken
                 val refreshToken = token.refreshToken
 
-                // If Access token expired, refresh
-                if (System.currentTimeMillis() / 1000 > datastoreManager.currentUserTokenExpiry.first()) {
+                val isTokenExpired =
+                    GeneralUtil.getCurrentEpoch() > datastoreManager.currentUserTokenExpiry.first()
+                val resp = networkRepository.getAllProduct(null)
+                val isTokenInvalidated =
+                    resp is ResponseResult.Error && resp.message.lowercase().contains("token")
+
+                // If Access token expired/invalidated, refresh
+                if (isTokenExpired || isTokenInvalidated) {
                     Log.d(
                         "MainViewModel",
                         "Access Token Expired ${GeneralUtil.getJwtExpiry(accessToken)}."
@@ -147,10 +156,11 @@ class MainViewModel @Inject constructor(
         if (token.isEmpty()) {
             emit(MainUiState.Success(false))
         } else {
+            val time = GeneralUtil.getCurrentEpoch()
             emit(
                 MainUiState.Success(
-                    (System.currentTimeMillis() / 1000 < datastoreManager.currentUserTokenExpiry.first()) ||
-                            (System.currentTimeMillis() / 1000 < datastoreManager.currentRefreshTokenExpiry.first())
+                    (time < datastoreManager.currentUserTokenExpiry.first()) ||
+                            (time < datastoreManager.currentRefreshTokenExpiry.first())
                 )
             )
         }
